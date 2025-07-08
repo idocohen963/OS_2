@@ -179,60 +179,61 @@ int molecule_subtract(AtomStock *stock, const char *molecule, unsigned int amoun
  * @return            Maximum number of drinks that can be produced
  */
 unsigned long long calculate_drink_production(AtomStock *stock, const char *drink_type) {
-    unsigned long long water_available = 0;
-    unsigned long long co2_available = 0;
-    unsigned long long alcohol_available = 0;
-    unsigned long long glucose_available = 0;
+    unsigned long long total_c_needed = 0;
+    unsigned long long total_h_needed = 0;
+    unsigned long long total_o_needed = 0;
     
-    // Calculate how many molecules of each type we can make from current stock
-    // H2O requires 2H + 1O
-    if (stock->hydrogen >= 2 && stock->oxygen >= 1) {
-        water_available = (stock->hydrogen / 2 < stock->oxygen) ? stock->hydrogen / 2 : stock->oxygen;
-    }
-    
-    // CO2 requires 1C + 2O
-    if (stock->carbon >= 1 && stock->oxygen >= 2) {
-        co2_available = (stock->carbon < stock->oxygen / 2) ? stock->carbon : stock->oxygen / 2;
-    }
-    
-    // C2H6O requires 2C + 6H + 1O
-    if (stock->carbon >= 2 && stock->hydrogen >= 6 && stock->oxygen >= 1) {
-        unsigned long long min_alcohol = stock->carbon / 2;
-        if (stock->hydrogen / 6 < min_alcohol) min_alcohol = stock->hydrogen / 6;
-        if (stock->oxygen < min_alcohol) min_alcohol = stock->oxygen;
-        alcohol_available = min_alcohol;
-    }
-    
-    // C6H12O6 requires 6C + 12H + 6O
-    if (stock->carbon >= 6 && stock->hydrogen >= 12 && stock->oxygen >= 6) {
-        unsigned long long min_glucose = stock->carbon / 6;
-        if (stock->hydrogen / 12 < min_glucose) min_glucose = stock->hydrogen / 12;
-        if (stock->oxygen / 6 < min_glucose) min_glucose = stock->oxygen / 6;
-        glucose_available = min_glucose;
-    }
-    
-    // Calculate drinks based on available molecules
+    // Calculate total atoms needed per drink for each drink type
     if (strcmp(drink_type, "SOFT DRINK") == 0) {
         // SOFT DRINK: H2O + CO2 + C6H12O6
-        unsigned long long min_drinks = water_available;
-        if (co2_available < min_drinks) min_drinks = co2_available;
-        if (glucose_available < min_drinks) min_drinks = glucose_available;
-        return min_drinks;
+        // H2O: 2H + 1O
+        // CO2: 1C + 2O  
+        // C6H12O6: 6C + 12H + 6O
+        // Total per drink: 7C + 14H + 9O
+        total_c_needed = 7;
+        total_h_needed = 14;
+        total_o_needed = 9;
     } else if (strcmp(drink_type, "VODKA") == 0) {
         // VODKA: H2O + C2H6O + C6H12O6
-        unsigned long long min_drinks = water_available;
-        if (alcohol_available < min_drinks) min_drinks = alcohol_available;
-        if (glucose_available < min_drinks) min_drinks = glucose_available;
-        return min_drinks;
+        // H2O: 2H + 1O
+        // C2H6O: 2C + 6H + 1O
+        // C6H12O6: 6C + 12H + 6O
+        // Total per drink: 8C + 20H + 8O
+        total_c_needed = 8;
+        total_h_needed = 20;
+        total_o_needed = 8;
     } else if (strcmp(drink_type, "CHAMPAGNE") == 0) {
         // CHAMPAGNE: H2O + CO2 + C2H6O
-        unsigned long long min_drinks = water_available;
-        if (co2_available < min_drinks) min_drinks = co2_available;
-        if (alcohol_available < min_drinks) min_drinks = alcohol_available;
-        return min_drinks;
+        // H2O: 2H + 1O
+        // CO2: 1C + 2O
+        // C2H6O: 2C + 6H + 1O
+        // Total per drink: 3C + 8H + 4O
+        total_c_needed = 3;
+        total_h_needed = 8;
+        total_o_needed = 4;
+    } else {
+        return 0;
     }
     
-    return 0;
+    // Calculate maximum drinks based on available atoms
+    unsigned long long max_drinks = MAX_ATOMS;
+    
+    if (total_c_needed > 0) {
+        unsigned long long drinks_by_carbon = stock->carbon / total_c_needed;
+        if (drinks_by_carbon < max_drinks) max_drinks = drinks_by_carbon;
+    }
+    
+    if (total_h_needed > 0) {
+        unsigned long long drinks_by_hydrogen = stock->hydrogen / total_h_needed;
+        if (drinks_by_hydrogen < max_drinks) max_drinks = drinks_by_hydrogen;
+    }
+    
+    if (total_o_needed > 0) {
+        unsigned long long drinks_by_oxygen = stock->oxygen / total_o_needed;
+        if (drinks_by_oxygen < max_drinks) max_drinks = drinks_by_oxygen;
+    }
+    
+    return (max_drinks == MAX_ATOMS) ? 0 : max_drinks;
 }
 
 
