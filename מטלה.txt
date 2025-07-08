@@ -1,0 +1,470 @@
+תרגיל 2 במערכות הפעלה למדעי המחשב - סופרים מולקולות  
+גירסא 2 - 11 במאי 2025 
+
+שלב 1 - מחסן אטומים )15 נקודות( 
+אנחנו מעוניינים לאחסן אצלנו אטומים של פחמן, חמצן, ומימן. אנחנו יכולים לאחסן סדר גודל של 10 בחזקת 18 
+
+אטומים מכל סוג.  
+כתבו שרת בשם atom_warehouse המקבל התחברויות ב-TCP. לאחר שהתקבלה התחברות אנחנו נשתמש 
+
+ב-IO MUX כדי לטפל בלקוחות המחוברים וכן לקבל התחברויות נוספות. 
+השרת יקבל בתור ארגומנט ראשון ויחיד )בינתיים( את הפורט עליו הוא מאזין. 
+
+ 
+  :TCP פקודות שנוכל לקבל מלקוחות
+
+ADD CARBON מספר 
+ADD OXYGEN מספר 
+ADD HYDROGEN מספר 
+ )unsigned int( ומוסיפה אטומים לפי המספר )כל פקודה מתקבלת בתור שורת טקסט מהלקוח )עם ירידת שורה
+
+בפקודה. 
+לאחר כל קבלה של פקודה יש להדפיס את מספר האטומים מכל סוג במחסן. 
+
+בקבלת פקודה בלתי חוקית יש להדפיס הודעת שגיאה. 
+ 
+
+ממשו לקוח בשם atom_supplier שמתחבר לשרת ושולח בקשות על פי ממשק משתמש לבחירתכם. 
+הלקוח יקבל בתור ארגומנט ראשון את שם השרת )IP או hostname(, ובתור ארגומנט שני את הפורט אליו הוא 
+
+יתחבר. 
+
+שלב 2 - מבקשים מולקולות )15 נקודות( 
+המחסן שלנו יכול לספק מולקולות של: 
+
+ H2O - מים
+ CO2 - פחמן דו חמצני
+
+ C6H12O6 - גלוקוז
+ C2H6O - )אתנול )אלכוהול
+
+ 
+שדרגו את תוכנת המחסן לתוכנה בשם molecule_supplier, כל היכולות מהשלב הקודם נשארות. 
+
+ .UDP-השרת יקבל בתור ארגומנט שני את הפורט עליו הוא יקבל בקשות ב
+שרת המחסן צריך להאזין לפקודות ב-UDP למשל: 
+
+DELIVER WATER מספר 
+DELIVER CARBON DIOXIDE מספר 
+DELIVER ALCOHOL מספר 
+DELIVER GLUCOSE מספר 
+
+כל פקודה מתקבלת בתור שורת טקסט מהלקוח )עם ירידת שורה(, על השרת לענות ללקוח ב-UDP האם 
+הבקשה סופקה או לא. 
+
+
+
+ 
+
+אם הבקשה סופקה השרת יפחית אטומים כדי לספק מולקולות כנדרש. 
+בקבלת פקודה בלתי חוקית יש להדפיס הודעת שגיאה. 
+
+ .UDP-וגם ל TCP-שימו לב שהשרת יכול לקבל בו זמנית בקשות למולקולות וגם אטומים וצריך להאזין גם ל
+ממשו לקוח בשם molecule_requester ששולח בקשות לשרת ומדפיס את התשובה. 
+
+ .UDP-ויתקשר על פיהם ב atom_supplier הלקוח יקבל ארגומנטים כמו
+
+שלב 3 - קונסול )15 נקודות( 
+המחסן שלנו פותח בר לשירות. 
+
+שדרגו את את תוכנת המחסן לתוכנה בשם drinks_bar, כל היכולות מהשלבים הקודמים נשארות. 
+השרת יאזין גם למקלדת. השרת יכול לקבל מהמקלדת פקודה  
+
+GEN SOFT DRINK 
+GEN VODKA 
+GEN CHAMPAGNE 
+ 
+
+אם קיבל את אחת הפקודות הנ"ל השרת יודיע כמה משקאות ניתן לייצר על פי המתכונים: 
+ 
+
+SOFT DRINK VODKA CHAMPAGNE 
+
+מים  מים  מים 
+
+פחמן דו חמצני  אלכוהול  פחמן דו חמצני 
+
+גלוקוז  גלוקוז  אלכוהול 
+ 
+
+התוכנה תדפיס את מספר המשקאות שניתן לייצר למסך, אין צורך להפחית את מספר האטומים מהמלאי. 
+ .UDP-ובקשות ב ,TCP בקשות מלקוחות ,TCP-בקשות מהמקלדת יתקבלו במקביל לבקשות חיבור ב
+
+שלב 4 - אופציות התחלה )20 נקודות(  
+אפשר להתחיל שרת עם מספר ידוע מראש של אטומים מכל סוג בעזרת האופציות. כמו קודם מספר שלא סופק 
+
+מתחיל מ-0. 
+בנוסף נממש TIMEOUT שאחריו השרת ירד אם לא קיבל קלט משום ערוץ. 
+
+האופציות החדשות הן להלן: 
+ 
+
+-o / --oxygen  אופציונלי מספר האטומים של חמצן 
+
+-c / --carbon  אופציונלי מספר האטומים של פחמן  
+
+-h / --hydrogen  אופציונלי מספר האטומים של מימן  
+
+-t / --timeout  אופציונלי TIMEOUT בשניות 
+
+-T / --tcp-port  הכרחי  TCP פורט
+
+
+-U / --udp-port  הכרחי  UDP פורט
+שימו לב: אופציה הכרחית משמע שהשרת חייב לקבל אותה עם ערך, אם לא קיבל יש להדפיס שגיאה ולצאת. 
+
+ 
+בנוסף הלקוחות מעכשיו יקבלו את הארגומנטים בעזרת אופציות: 
+
+-h <hostname/IP> -p <port> 
+שימו לב שהחל משלב זה הארגומנטים מתקבלים בכל סדר שהוא, למשל: 
+
+./drinks_bar -t 60 -T 5555 -o 12 -U 7777 
+
+שלב UDS (15 - 5 נקודות( 
+שדרגו את השרת כך שיתמוך בתקשורת על פני unix domain sockets מסוגי stream ו-datagram לאותם 
+
+תפקידים כמו TCP ו-UDP בהתאם. לשרת יתווספו אופציות: 
+-s / --stream-path <UDS stream file path> -d / --datagram-path <UDS datagram filepath> 
+
+ 
+שדרגו גם את הלקוחות כך שיוכלו לקבל במקום כתובת ופורט ארגומנט: 
+
+-f <UDS socket file path> 
+אם מתקבלים ארגומנטים סותרים )גם כתובת וגם מסלול קובץ( יש להדפיס שגיאה בהתאם. 
+
+ 
+
+שלב 6 - מקבול תוכניות )20 נקודות( 
+אנחנו רוצים שמספר ברמנים יוכלו להתממשק עם השרת בו זמנית. 
+
+שדרגו את השרת כך שיתמוך בשמירת המצב )המלאי( בקובץ, מסלול הקובץ יסופק בעזרת האופציה: 
+-f / --save-file <file path> 
+אם סופק מסלול לקובץ והקובץ קיים על השרת לטעון ממנו את המלאי הנוכחי )להתעלם מאופציות לאתחול מלאי 
+
+משלב 4( ולעדכן בו את המלאי כל פעם שיש בו שינוי. אם הקובץ לא קיים יש ליצור אותו עם המלאי ההתחלתי 
+)לפי האופציות משלב 4(. )אם לא סופק מסלול יש להתנהג כמו קודם.( 
+
+שימו לב שמספר תהליכים יכולים להריץ את השרת בו זמנית ויש לוודא שהם לא מפריעים אחד לשני. 
+בונוס )5 נקודות(: נהלו את כל הממשק מול הקובץ ע"י הגדרת struct למלאי ומיפוי לזיכרון עם מצביע מתאים. 
+
+הנחיות נוספות 
+כל שלב צריך להיות בתיקייה בתוך התיקייה הראשית ולהיות מוכל בפני עצמו.  .1​
+
+מומלץ להשתמש ב-𝑔𝑒𝑡𝑜𝑝𝑡(3) לטיפול בפרמטרים.  .2​
+ .timeout למימוש 𝑎𝑙𝑎𝑟𝑚(2)-מומלץ להשתמש ב .3​
+
+יש להשתמש ב-𝑔𝑒𝑡𝑎𝑑𝑑𝑟𝑖𝑛𝑓𝑜(3) לפתירת hostname בלקוחות.  .4​
+ .code coverage )יש לצרף לתרגיל דו"ח )או דו"חות .5​
+יש לצרף makefile רקורסיבי הבונה את כל השלבים.  .6​
+
+שימו לב: משקלו של תרגיל זה הוא 10% מהציון הסופי ו-5% הגנה אנא התייחסו בהתאם.  .7​
+
+
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <errno.h>
+#include <ctype.h>
+#include <stdint.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netdb.h>
+#include <poll.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/select.h>
+
+#define MAX_CLIENTS 100
+#define BUFFER_SIZE 1024
+#define MAX_ATOMS 1000000000000000000ULL  // (10^18)
+
+
+typedef struct {
+    unsigned long long carbon;
+    unsigned long long hydrogen;
+    unsigned long long oxygen;
+} AtomStock;
+
+AtomStock stock = {0, 0, 0};
+
+// פונקציה להדפסת המלאי הנוכחי
+void print_stock() {
+    printf("Stock: C=%llu, H=%llu, O=%llu\n", stock.carbon, stock.hydrogen, stock.oxygen);
+}
+
+int atom_adder(AtomStock *stock, const char *element, unsigned int amount) {
+    if (strcmp(element, "CARBON") == 0) {
+        if ((unsigned long long)stock->carbon + amount > MAX_ATOMS) {
+            fprintf(stderr, "Error: Exceeds MAX_ATOMS for CARBON\n");
+            return 0;
+        }
+        stock->carbon += amount;
+    } else if (strcmp(element, "HYDROGEN") == 0) {
+        if ((unsigned long long)stock->hydrogen + amount > MAX_ATOMS) {
+            fprintf(stderr, "Error: Exceeds MAX_ATOMS for HYDROGEN\n");
+            return 0;
+        }
+        stock->hydrogen += amount;
+    } else if (strcmp(element, "OXYGEN") == 0) {
+        if ((unsigned long long)stock->oxygen + amount > MAX_ATOMS) {
+            fprintf(stderr, "Error: Exceeds MAX_ATOMS for OXYGEN\n");
+            return 0;
+        }
+        stock->oxygen += amount;
+    } else {
+        fprintf(stderr, "Error: Unknown atom type '%s'\n", element);
+        return 0;
+    }
+    return 1;
+}
+
+// פונקציה לעיבוד פקודה
+int process_command(const char *cmd, AtomStock *stock, int client_fd) {
+    char op[16], atom[16];
+    unsigned int amount;
+    if (sscanf(cmd, "%15s %15s %u", op, atom, &amount) == 3 && strcmp(op, "ADD") == 0) {
+        if (atom_adder(stock, atom, amount)) {
+            const char *ok_msg = "adeed to wearhouse successfully\n";
+            if (send(client_fd, ok_msg, strlen(ok_msg), 0) == -1) {
+                perror("send to client failed");
+            }
+            print_stock();
+        } else {
+            const char *err_msg = "ERROR: Exceeds MAX_ATOMS\n";
+            if (send(client_fd, err_msg, strlen(err_msg), 0) == -1) {
+                perror("send to client failed");
+            }
+        }
+    } else {
+        fprintf(stderr, "Invalid command from client: %s\n", cmd);
+    }
+    return 0;
+}
+
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <port>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    int listen_fd, new_fd, port;
+    struct sockaddr_in serv_addr, cli_addr;
+    socklen_t cli_len = sizeof(cli_addr);
+    char buffer[BUFFER_SIZE];
+    int client_fds[MAX_CLIENTS] = {0};
+    
+
+    port = atoi(argv[1]);
+    if (port <= 0 || port > 65535) {
+        fprintf(stderr, "Error: Invalid port number %s\n", argv[1]);
+        exit;
+
+    listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (listen_fd < 0) {
+        perror("socket");
+        exit(EXIT_FAILURE);
+    }
+
+    int opt = 1;
+    setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    memset(&serv_addr, 0, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons(port);
+    if (bind(listen_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+        perror("bind");
+        exit(EXIT_FAILURE);
+    }
+    if (listen(listen_fd, 10) < 0) {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+    printf("atom_warehouse server listening on port %d\n", port);
+
+    fd_set readfds;
+    int max_fd = listen_fd , i;
+
+    while (1) {
+        FD_ZERO(&readfds);
+        FD_SET(listen_fd, &readfds);
+        
+        for (i = 0; i < MAX_CLIENTS; i++) {
+            if (client_fds[i] > 0) {
+                FD_SET(client_fds[i], &readfds);
+                if (client_fds[i] > max_fd) max_fd = client_fds[i];
+            }
+        }
+        int activity = select(max_fd + 1, &readfds, NULL, NULL, NULL);
+        if (activity < 0 ) {
+            perror("select");
+            break;
+        }
+        // חיבור חדש
+        if (FD_ISSET(listen_fd, &readfds)) {
+            new_fd = accept(listen_fd, (struct sockaddr *)&cli_addr, &cli_len);
+            if (new_fd < 0) {
+                perror("accept");
+                continue;
+            }
+            for (i = 0; i < MAX_CLIENTS; i++) {
+                if (client_fds[i] == 0) {
+                    client_fds[i] = new_fd;
+                    break;
+                }
+            }
+            if (i == MAX_CLIENTS) {
+                fprintf(stderr, "Too many clients\n");
+                close(new_fd);
+            } else {
+                printf("New client connected: fd=%d\n", new_fd);
+            }
+        }
+        // קלט מלקוחות
+        for (i = 0; i < MAX_CLIENTS; i++) {
+            int fd = client_fds[i];
+            if ( FD_ISSET(fd, &readfds)) {
+                ssize_t n = recv(fd, buffer, sizeof(buffer) - 1, 0);
+                if (n <= 0) {
+                    if (n < 0) perror("recv");
+                    printf("Client fd=%d disconnected\n", fd);
+                    close(fd);
+                    client_fds[i] = 0;
+                } else {
+                    buffer[n] = '\0';
+                    process_command(buffer, &stock, fd);
+                }
+            }
+        }
+    }
+    close(listen_fd);
+    return 0;
+}
+}
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+#define BUFFER_SIZE 1024
+
+int connect_to_server(const char *host, const char *port) {
+    struct addrinfo *head = NULL;
+    struct addrinfo hints = {0};
+    int sockfd;
+    
+   
+    hints.ai_family = AF_INET; // IPv4
+    hints.ai_socktype = SOCK_STREAM;//TCP
+
+    int rv;
+    if ((rv = getaddrinfo(host, port, &hints, &head)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+        exit(EXIT_FAILURE);
+    }
+
+    struct addrinfo *p;
+    for (p = head; p != NULL; p = p->ai_next) {
+        sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+        if (sockfd == -1) continue;
+
+        if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+            close(sockfd);
+            continue;
+        }
+
+        break;
+    }
+
+    freeaddrinfo(head);
+
+    if (!p) {
+        fprintf(stderr, "Failed to connect to server\n");
+        exit(EXIT_FAILURE);
+    }
+
+    return sockfd;
+}
+
+// פונקציה שמוודאת שהפקודה תקינה
+int validate_command(const char *command) {
+    char add[256], atum[256], amount_str[256];
+    unsigned int amount;
+    if (sscanf(command, "%255s %255s %255s", add, atum, amount_str) == 3) {
+        // Check if amount_str contains only digits
+        for (int i = 0; amount_str[i]; ++i) {
+            if (!isdigit(amount_str[i])) {
+                return 0;
+            }
+        }
+        // Check if the number is not too big for unsigned int
+        if (strlen(amount_str) > 10 || (strlen(amount_str) == 10 && strcmp(amount_str, "4294967295") > 0)) {
+            return 0;
+        }
+        // Now safe to convert
+        amount = (unsigned int)strtoul(amount_str, NULL, 10);
+        if (strcmp(add, "ADD") == 0 &&
+            (strcmp(atum, "HYDROGEN") == 0 || strcmp(atum, "OXYGEN") == 0 || strcmp(atum, "CARBON") == 0) &&
+            amount > 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int main (int argc ,char* argv[]){
+
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s <hostname/IP> <port>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    const char *host = argv[1];
+    const char *port = argv[2];
+
+    int sock = connect_to_server(host ,port);
+    printf("connection success\n");
+    printf("Enter command: ADD <ATUM: HYDROGEN,OXYGEN,CARBON> <AMOUNT: unsigin int>\n");
+    printf("exemple: ADD CARBON 50\n");
+    while (1)
+    {
+        char command[256];
+        char buffer[BUFFER_SIZE] = {0};
+        
+        printf("Enter command: ");
+        if (fgets(command, sizeof(command), stdin) != NULL) {
+            if (validate_command(command)) {
+                if (send(sock, command, strlen(command), 0) != -1) {
+                    printf("send to warehouse.\n");
+                    // קבלת תשובה פשוטה מהשרת
+                    ssize_t n = recv(sock, buffer, sizeof(buffer)-1, 0);
+                    if (n > 0) {
+                        buffer[n] = '\0';
+                        printf("Server: %s\n", buffer);
+                    } else if (n == 0) {
+                        printf("Server closed the connection.\n");
+                        break;
+                    } else {
+                        perror("recv failed");
+                    }
+                } else {
+                    perror("send failed");
+                }
+            } else {
+                printf("Invalid command format or values.\n");
+            }
+        }
+    }
+    close(sock);
+    printf("Connection closed.\n");
+}
+
+
+    
+
+    
