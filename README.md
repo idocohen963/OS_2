@@ -1,10 +1,8 @@
 # Operating Systems Assignment 2 - Molecular Warehouse System
-**אוניברסיטת תל אביב - מדעי המחשב**  
-**מערכות הפעלה - תרגיל 2**
 
 ## 📋 Authors
-- **Student Name**: [Your Name]  
-- **Student ID**: [Your ID]
+- **Student Name**: ido cohen  
+- **Mail**: idocohen963@gmail.com
 
 ---
 
@@ -65,7 +63,7 @@ os_2/
 
 ## 🚀 Features by Stage
 
-### **Q1: Foundation - Basic TCP Warehouse** (15 points)
+### **Q1: Foundation - Basic TCP Warehouse** 
 **Executable**: `atom_warehouse`, `atom_supplier`
 
 🔧 **Core Functionality**:
@@ -81,7 +79,7 @@ os_2/
 
 ---
 
-### **Q2: Evolution - Molecule Production** (15 points)
+### **Q2: Evolution - Molecule Production** 
 **Executable**: `molecule_supplier`, `molecule_requester`
 
 🔧 **Enhanced Functionality**:
@@ -100,7 +98,7 @@ os_2/
 
 ---
 
-### **Q3: Administration - Beverage Production Console** (15 points)
+### **Q3: Administration - Beverage Production Console** 
 **Executable**: `drinks_bar`, `molecule_requester`
 
 🔧 **Administrative Features**:
@@ -424,31 +422,11 @@ The system includes comprehensive error handling for:
 
 ---
 
-## 📊 Performance Characteristics
-
-### **Scalability Metrics**
-- **Maximum Concurrent Clients**: 100 (configurable via `MAX_CLIENTS`)
-- **Maximum Atoms per Type**: 10¹⁸ (1 quintillion)
-- **Buffer Size**: 1024 bytes per client connection
-- **Memory Footprint**: Minimal with memory-mapped persistence
-
-### **Network Performance**
-- **TCP Throughput**: Optimized for atom addition operations
-- **UDP Latency**: Low-latency molecule delivery requests
-- **UDS Performance**: Superior to network sockets for local communication
-
-### **Storage Performance**
-- **Memory-Mapped I/O**: Zero-copy read/write operations
-- **File Locking Overhead**: Minimal with shared/exclusive lock optimization
-- **Persistence**: Immediate state synchronization across process restarts
-
----
-
 ## 🔍 System Requirements
 
 ### **Compilation Environment**
 - **Compiler**: GCC with C99 standard support
-- **Required Standards**: `_POSIX_C_SOURCE=200112L`, `_GNU_SOURCE`
+- **Required Standards**: `_POSIX_C_SOURCE=200112L`
 - **Build Tools**: Make, standard POSIX utilities
 
 ### **Runtime Dependencies**
@@ -462,21 +440,10 @@ The system includes comprehensive error handling for:
 
 ---
 
-## 📚 References & Standards
-
-- **POSIX.1-2001**: Socket programming and file operations
-- **RFC 793**: TCP protocol specification  
-- **RFC 768**: UDP protocol specification
-- **Advanced Programming in the UNIX Environment**: W. Richard Stevens
-- **Unix Network Programming**: W. Richard Stevens
-
----
-
 ## 🎓 Assignment Information
 
 **Course**: Operating Systems - Computer Science  
-**Institution**: Tel Aviv University  
-**Assignment Weight**: 10% final grade + 5% defense  
+**Institution**: Ariel University   
 **Submission Requirements**: Complete source code + coverage reports + recursive Makefile
 
 ---
