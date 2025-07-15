@@ -14,14 +14,5 @@ clean:
 		$(MAKE) -C $$dir clean; \
 	done
 
-coverage:
-	@for dir in $(SUBDIRS); do \
-		$(MAKE) -C $$dir coverage 2>/dev/null || true; \
-	done
 
-coverage-report:
-	@for dir in $(SUBDIRS); do \
-		$(MAKE) -C $$dir coverage-report 2>/dev/null || true; \
-	done
-
-.PHONY: all clean coverage coverage-report
+.PHONY: all clean 
