@@ -1,3 +1,22 @@
+/*
+ * תיאור כללי של הלקוח:
+ * --------------------
+ * molecule_requester הוא לקוח שמתקשר עם שרת molecule_supplier באמצעות UDP.
+ * הלקוח מאפשר למשתמש לשלוח בקשות לקבלת מולקולות בפורמט הבא:
+ * DELIVER <סוג המולקולה> <כמות>
+ *
+ * סוגי המולקולות האפשריים:
+ * - WATER (מים - H2O)
+ * - CARBON DIOXIDE (פחמן דו-חמצני - CO2)
+ * - ALCOHOL (אלכוהול - C2H6O)
+ * - GLUCOSE (גלוקוז - C6H12O6)
+ *
+ * הלקוח שולח את הבקשה לשרת, מחכה לתשובה ומציג אותה למשתמש.
+ * 
+ * הפעלת הלקוח:
+ * ./molecule_requester <hostname/IP> <port>
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,7 +27,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/time.h>  
-#include <getopt.h>
 
 #define BUFFER_SIZE 1024
 
@@ -90,7 +108,7 @@ int setup_udp_socket(const char *host, const char *port, struct sockaddr_in *ser
     int rv;
     if ((rv = getaddrinfo(host, port, &hints, &res)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     
     // Loop through all the results and make a socket
@@ -122,30 +140,14 @@ int setup_udp_socket(const char *host, const char *port, struct sockaddr_in *ser
  * @return      Exit code
  */
 int main (int argc ,char* argv[]){
-    int opt;
-    const char *host = NULL;
-    const char *port = NULL;
 
-    // Process command line options
-    while ((opt = getopt(argc, argv, "h:p:")) != -1) {
-        switch (opt) {
-            case 'h':
-                host = optarg;
-                break;
-            case 'p':
-                port = optarg;
-                break;
-            default:
-                fprintf(stderr, "Usage: %s -h <hostname/IP> -p <port>\n", argv[0]);
-                exit(1);
-        }
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s <hostname/IP> <port>\n", argv[0]);
+        exit(EXIT_FAILURE);
     }
 
-    // Check if both host and port were provided
-    if (host == NULL || port == NULL) {
-        fprintf(stderr, "Usage: %s -h <hostname/IP> -p <port>\n", argv[0]);
-        exit(1);
-    }
+    const char *host = argv[1];
+    const char *port = argv[2];
 
     // Set up UDP socket and server address
     struct sockaddr_in server_addr;
@@ -167,7 +169,7 @@ int main (int argc ,char* argv[]){
 
             if (strcmp(command, "exit") == 0 || strcmp(command, "quit") == 0) {
             printf("Exiting...\n");
-            exit(1);
+            break;
             }
             
             if (validate_udp_command(command)) {

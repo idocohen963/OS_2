@@ -47,6 +47,10 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/select.h>
+#include <getopt.h>
+#include <signal.h>  // For signal handling
+#include <sys/un.h>  // For Unix domain sockets
+
 
 #define MAX_CLIENTS 100       // Maximum number of TCP clients that can be connected simultaneously
 #define BUFFER_SIZE 1024      // Size of the buffer for receiving data
@@ -67,6 +71,23 @@ AtomStock stock = {0, 0, 0};
 
 // Counter for the number of connected TCP clients
 int connected_clients = 0;
+
+// Global variables to track UDS paths for signal handler cleanup
+char *global_stream_path = NULL;
+char *global_datagram_path = NULL;
+
+/**
+ * Signal handler for SIGALRM
+ * This function is called when the alarm timer expires
+ */
+void handle_alarm(int signum) {
+    printf("Timeout reached with no activity. Server shutting down.\n");
+    // Clean up UDS socket files before exit
+    if (global_stream_path != NULL) unlink(global_stream_path);
+    if (global_datagram_path != NULL) unlink(global_datagram_path);
+    
+    exit(0);
+}
 
 /**
  * Prints the current atom inventory to stdout
@@ -235,11 +256,6 @@ unsigned long long calculate_drink_production(AtomStock *stock, const char *drin
 int process_console_command(const char *cmd, AtomStock *stock) {
     char op[256], drink_type1[256], drink_type2[256];
 
-    if (strcmp(cmd, "exit") == 0 || strcmp(cmd, "quit") == 0) {
-        printf("Exiting...\n");
-        exit(1);
-    }
-    
     // Parse command: GEN <DRINK_TYPE> or GEN <DRINK_TYPE1> <DRINK_TYPE2>
     int n = sscanf(cmd, "%255s %255s %255s", op, drink_type1, drink_type2);
     
@@ -318,7 +334,7 @@ int process_tcp_command(const char *cmd, AtomStock *stock, int client_fd) {
  * @param addrlen     Length of the client address structure
  * @return            0 on completion
  */
-int process_udp_command(const char *cmd, AtomStock *stock, int udp_sock, struct sockaddr_in *client_addr, socklen_t addrlen) {
+int process_udp_command(const char *cmd, AtomStock *stock, int udp_sock, struct sockaddr *client_addr, socklen_t addrlen) {
     char op[256], molecule1[256], molecule2[256], amount_str[256];
     unsigned int amount;
     char molecule[512];
@@ -350,7 +366,7 @@ int process_udp_command(const char *cmd, AtomStock *stock, int udp_sock, struct 
     for (int i = 0; amount_str[i]; ++i) {
         if (!isdigit((unsigned char)amount_str[i])) {
             const char *err_msg = "ERROR: Invalid amount\n";
-            sendto(udp_sock, err_msg, strlen(err_msg), 0, (struct sockaddr*)client_addr, addrlen);
+            sendto(udp_sock, err_msg, strlen(err_msg), 0, client_addr, addrlen);
             return 0;
         }
     }
@@ -359,7 +375,7 @@ int process_udp_command(const char *cmd, AtomStock *stock, int udp_sock, struct 
     amount = (unsigned int)strtoul(amount_str, NULL, 10);
     if (amount == 0) {
         const char *err_msg = "ERROR: Amount must be positive\n";
-        sendto(udp_sock, err_msg, strlen(err_msg), 0, (struct sockaddr*)client_addr, addrlen);
+        sendto(udp_sock, err_msg, strlen(err_msg), 0, client_addr, addrlen);
         return 0;
     }
 
@@ -367,14 +383,14 @@ int process_udp_command(const char *cmd, AtomStock *stock, int udp_sock, struct 
     if (molecule_subtract(stock, molecule, amount)) {
         // Success message
         const char *ok_msg = "Molecule delivered successfully\n";
-        if (sendto(udp_sock, ok_msg, strlen(ok_msg), 0, (struct sockaddr*)client_addr, addrlen) == -1) {
+        if (sendto(udp_sock, ok_msg, strlen(ok_msg), 0, client_addr, addrlen) == -1) {
             perror("sendto to client failed");
         }
         print_stock();
     } else {
         // Error message if creating molecules fails
         const char *err_msg = "ERROR: Not enough atoms or unknown molecule\n";
-        if (sendto(udp_sock, err_msg, strlen(err_msg), 0, (struct sockaddr*)client_addr, addrlen) == -1) {
+        if (sendto(udp_sock, err_msg, strlen(err_msg), 0, client_addr, addrlen) == -1) {
             perror("sendto to client failed");
         }
     }
@@ -389,110 +405,347 @@ int process_udp_command(const char *cmd, AtomStock *stock, int udp_sock, struct 
  * @return     Exit code
  */
 int main(int argc, char *argv[]) {
-    // Validate command line arguments
-    if (argc != 3) {
-        fprintf(stderr, "Usage %s <TCP port> <UDP port>\n", argv[0]);
+
+    int opt, timeout = 0, UDP_port = -1, TCP_port = -1;
+    char *stream_path = NULL, *datagram_path = NULL;
+
+    static struct option long_options[] = {
+        {"oxygen",       required_argument, 0, 'o'},
+        {"carbon",       required_argument, 0, 'c'},
+        {"hydrogen",     required_argument, 0, 'h'},
+        {"timeout",      required_argument, 0, 't'},
+        {"tcp-port",     required_argument, 0, 'T'},
+        {"udp-port",     required_argument, 0, 'U'},
+        {"stream-path",  required_argument, 0, 's'},
+        {"datagram-path",required_argument, 0, 'd'},
+        {0, 0, 0, 0}
+    };
+
+    while ((opt = getopt_long(argc, argv, "o:c:h:t:T:U:s:d:", long_options, NULL)) != -1) {
+        switch (opt) {
+            case 'o':
+            {
+                char *endptr;
+                unsigned long long value = strtoull(optarg, &endptr, 10);
+                
+                // Check for conversion errors
+                if (*endptr != '\0' || endptr == optarg || value > MAX_ATOMS) {
+                    fprintf(stderr, "Error: Invalid or out of range value for oxygen: %s\n", optarg);
+                    exit(1);
+                }
+                stock.oxygen = value;
+                break;
+            }
+            case 'c':
+            {
+                char *endptr;
+                unsigned long long value = strtoull(optarg, &endptr, 10);
+                
+                // Check for conversion errors
+                if (*endptr != '\0' || endptr == optarg || value > MAX_ATOMS) {
+                    fprintf(stderr, "Error: Invalid or out of range value for carbon: %s\n", optarg);
+                    exit(1);
+                }
+                stock.carbon = value;
+                break;
+            }
+            case 'h':
+            {
+                char *endptr;
+                unsigned long long value = strtoull(optarg, &endptr, 10);
+                
+                // Check for conversion errors
+                if (*endptr != '\0' || endptr == optarg || value > MAX_ATOMS) {
+                    fprintf(stderr, "Error: Invalid or out of range value for hydrogen: %s\n", optarg);
+                    exit(1);
+                }
+                stock.hydrogen = value;
+                break;
+            }
+            case 't':
+                {
+                    char *endptr;
+                    long value = strtol(optarg, &endptr, 10);
+                    
+                    // Check for conversion errors
+                    if (*endptr != '\0' || endptr == optarg || value <= 0) {
+                        fprintf(stderr, "Error: Invalid timeout value: %s\n", optarg);
+                        exit(1);
+                    }
+                    timeout = (int)value;
+                    break;
+                }
+            case 'T':
+                {
+                    char *endptr;
+                    long value = strtol(optarg, &endptr, 10);
+                    
+                    // Check for conversion errors and valid port range
+                    if (*endptr != '\0' || endptr == optarg || value <= 0 || value > 65535) {
+                        fprintf(stderr, "Error: Invalid TCP port number: %s\n", optarg);
+                        exit(1);
+                    }
+                    TCP_port = (int)value;
+                    break;
+                }
+            case 'U':
+                {
+                    char *endptr;
+                    long value = strtol(optarg, &endptr, 10);
+                    
+                    // Check for conversion errors and valid port range
+                    if (*endptr != '\0' || endptr == optarg || value <= 0 || value > 65535) {
+                        fprintf(stderr, "Error: Invalid UDP port number: %s\n", optarg);
+                        exit(1);
+                    }
+                    UDP_port = (int)value;
+                    break;
+                }
+            case 's':
+                stream_path = optarg;
+                break;
+            case 'd':
+                datagram_path = optarg;
+                break;
+
+            default:
+                fprintf(stderr, "Usage: %s (-T <tcp-port> -U <udp-port>) OR (-s <UDS stream path> -d <UDS datagram path>) [--oxygen N] [--carbon N] [--hydrogen N] [--timeout SECS]\n", argv[0]);
+                fprintf(stderr, "Note: You must specify either BOTH TCP and UDP ports OR BOTH UDS stream and datagram paths\n");
+                exit(1);
+        }
+    }
+
+
+    // Check that either both TCP and UDP are provided OR both UDS stream and datagram are provided
+    if (!((TCP_port != -1 && UDP_port != -1) || 
+          (stream_path != NULL && datagram_path != NULL))) {
+        
+        perror("Connection configuration error");
+        fprintf(stderr, "Must specify either both TCP and UDP ports (-T and -U) or both UDS paths (-s and -d)\n");
+        fprintf(stderr, "Usage: %s -T <tcp-port> -U <udp-port> OR %s -s <UDS-stream-path> -d <UDS-datagram-path> [--oxygen N] [--carbon N] [--hydrogen N] [--timeout SECS]\n", argv[0], argv[0]);
         exit(1);
     }
 
-    // Parse and validate TCP port
-    int TCP_port = atoi(argv[1]);
-    if (TCP_port <= 0 || TCP_port > 65535) {
-        fprintf(stderr, "Error: Invalid TCP port number %s\n", argv[1]);
-        exit(1);
-    }
     
-    // Parse and validate UDP port
-    int UDP_port = atoi(argv[2]);
-    if (UDP_port <= 0 || UDP_port > 65535) {
-        fprintf(stderr, "Error: Invalid UDP port number %s\n", argv[2]);
-        exit(1); 
-    }
-    
-    int tcp_sock, udp_sock;
+    int tcp_sock = -1, udp_sock = -1, uds_stream_sock = -1, uds_dgram_sock = -1;
     struct sockaddr_in tcp_addr, udp_addr;
+    struct sockaddr_un uds_stream_addr, uds_dgram_addr;
     char buffer[BUFFER_SIZE];
 
-    // Create TCP socket for atom addition operations
-    if ((tcp_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        perror("TCP socket failed");
-        exit(1);
+    // TCP/UDP mode
+    if (TCP_port != -1 && UDP_port != -1) {
+        // Create and configure TCP socket
+        if ((tcp_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+            perror("TCP socket creation failed");
+            exit(1);
+        }
+        
+        // Configure TCP socket address
+        memset(&tcp_addr, 0, sizeof(tcp_addr));
+        tcp_addr.sin_family = AF_INET;
+        tcp_addr.sin_addr.s_addr = INADDR_ANY;  // Listen on all available interfaces
+        tcp_addr.sin_port = htons(TCP_port);    // Set the TCP port
+        
+        // Bind TCP socket
+        if (bind(tcp_sock, (struct sockaddr*)&tcp_addr, sizeof(tcp_addr)) < 0) {
+            perror("TCP bind failed");
+            // Clean up resources before exit
+            close(tcp_sock);
+            exit(1);
+        }
+        
+        // Create and configure UDP socket
+        if ((udp_sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+            perror("UDP socket creation failed");
+            // Clean up resources before exit
+            close(tcp_sock);
+            exit(1);
+        }
+        
+        // Configure UDP socket address
+        memset(&udp_addr, 0, sizeof(udp_addr));
+        udp_addr.sin_family = AF_INET;
+        udp_addr.sin_addr.s_addr = INADDR_ANY;  // Listen on all available interfaces
+        udp_addr.sin_port = htons(UDP_port);    // Set the UDP port
+        
+        // Bind UDP socket
+        if (bind(udp_sock, (struct sockaddr*)&udp_addr, sizeof(udp_addr)) < 0) {
+            perror("UDP bind failed");
+            // Clean up resources before exit
+            close(tcp_sock);
+            close(udp_sock);
+            exit(1);
+        }
+        
+        printf("TCP/UDP mode initialized successfully\n");
+    }
+    // UDS mode
+    else if (stream_path != NULL && datagram_path != NULL) {
+        // Create and configure UDS stream socket
+        if ((uds_stream_sock = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
+            perror("UDS stream socket creation failed");
+            exit(1);
+        }
+        
+        // Configure UDS stream socket address
+        memset(&uds_stream_addr, 0, sizeof(uds_stream_addr));
+        uds_stream_addr.sun_family = AF_UNIX;
+        strncpy(uds_stream_addr.sun_path, stream_path, sizeof(uds_stream_addr.sun_path) - 1);
+        
+        // Remove existing socket file if present
+        unlink(stream_path);
+        
+        // Bind UDS stream socket
+        if (bind(uds_stream_sock, (struct sockaddr*)&uds_stream_addr, sizeof(uds_stream_addr)) < 0) {
+            perror("UDS stream bind failed");
+            // Clean up resources before exit
+            close(uds_stream_sock);
+            exit(1);
+        }
+        
+        // Create and configure UDS datagram socket
+        if ((uds_dgram_sock = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0) {
+            perror("UDS datagram socket creation failed");
+            // Clean up resources before exit
+            close(uds_stream_sock);
+            unlink(stream_path);
+            exit(1);
+        }
+        
+        // Configure UDS datagram socket address
+        memset(&uds_dgram_addr, 0, sizeof(uds_dgram_addr));
+        uds_dgram_addr.sun_family = AF_UNIX;
+        strncpy(uds_dgram_addr.sun_path, datagram_path, sizeof(uds_dgram_addr.sun_path) - 1);
+        
+        // Remove existing socket file if present
+        unlink(datagram_path);
+        
+        // Bind UDS datagram socket
+        if (bind(uds_dgram_sock, (struct sockaddr*)&uds_dgram_addr, sizeof(uds_dgram_addr)) < 0) {
+            perror("UDS datagram bind failed");
+            // Clean up resources before exit
+            close(uds_stream_sock);
+            close(uds_dgram_sock);
+            unlink(stream_path);
+            exit(1);
+        }
+        
+        printf("UDS mode initialized successfully\n");
+    }
+    
+    // Set TCP socket to listen mode with a backlog of 10 connections if in TCP/UDP mode
+    if (tcp_sock != -1) {
+        if (listen(tcp_sock, 10) < 0) {
+            perror("TCP listen failed");
+            // Clean up resources before exit
+            close(tcp_sock);
+            close(udp_sock);
+            exit(1);
+        }
+    }
+    
+    // Set UDS stream socket to listen mode with a backlog of 10 connections if in UDS mode
+    if (uds_stream_sock != -1) {
+        if (listen(uds_stream_sock, 10) < 0) {
+            perror("UDS stream listen failed");
+            // Clean up resources before exit
+            close(uds_stream_sock);
+            close(uds_dgram_sock);
+            unlink(stream_path);
+            unlink(datagram_path);
+            exit(1);
+        }
     }
 
-    // Create UDP socket for molecule delivery operations
-    if ((udp_sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        perror("UDP socket failed");
-        exit(1);
-    }
-
-    // Configure TCP socket address
-    memset(&tcp_addr, 0, sizeof(tcp_addr));
-    tcp_addr.sin_family = AF_INET;
-    tcp_addr.sin_addr.s_addr = INADDR_ANY;  // Listen on all available interfaces
-    tcp_addr.sin_port = htons(TCP_port);    // Set the TCP port
-
-    // Configure UDP socket address
-    memset(&udp_addr, 0, sizeof(udp_addr));
-    udp_addr.sin_family = AF_INET;
-    udp_addr.sin_addr.s_addr = INADDR_ANY;  // Listen on all available interfaces
-    udp_addr.sin_port = htons(UDP_port);    // Set the UDP port
-
-    // Bind sockets to their addresses
-    if (bind(tcp_sock, (struct sockaddr*)&tcp_addr, sizeof(tcp_addr)) < 0) {
-        perror("TCP bind failed");
-        exit(1);
-    }
-    if (bind(udp_sock, (struct sockaddr*)&udp_addr, sizeof(udp_addr)) < 0) {
-        perror("UDP bind failed");
-        exit(1);
-    }
-
-    // Set TCP socket to listen mode with a backlog of 10 connections
-    if (listen(tcp_sock, 10) < 0) {
-        perror("TCP listen failed");
-        exit(1);
-    }
-
-    /* Updated startup message from molecule_supplier to drinks_bar */
-    printf("Drinks Bar Server listening: TCP on port %d, UDP on port %d\n", TCP_port, UDP_port);
+    /* Updated startup message to include all active connections */
+    printf("Drinks Bar Server listening:");
+    if (TCP_port != -1) printf(" TCP on port %d", TCP_port);
+    if (UDP_port != -1) printf(", UDP on port %d", UDP_port);
+    if (stream_path != NULL) printf(", UDS stream on %s", stream_path);
+    if (datagram_path != NULL) printf(", UDS datagram on %s", datagram_path);
+    printf("\n");
     printf("Console commands: GEN SOFT DRINK / GEN VODKA / GEN CHAMPAGNE\n");
     printf("Type exit/quit to exit\n");
 
     // Initialize file descriptor sets for select()
     fd_set readfds, master_set;
-    int maxfd = (tcp_sock > udp_sock ? tcp_sock : udp_sock) + 1;
     FD_ZERO(&master_set);
-    FD_SET(tcp_sock, &master_set);    // Add TCP socket to monitoring set
-    FD_SET(udp_sock, &master_set);    // Add UDP socket to monitoring set
     FD_SET(STDIN_FILENO, &master_set);  // Add stdin to monitoring set for console input
+    int maxfd = STDIN_FILENO;  // Start with stdin
+   
+    // Add all active sockets to monitoring set
+    if (tcp_sock != -1) {
+        FD_SET(tcp_sock, &master_set);
+        maxfd = (tcp_sock > maxfd) ? tcp_sock : maxfd;
+    }
+    
+    if (udp_sock != -1) {
+        FD_SET(udp_sock, &master_set);
+        maxfd = (udp_sock > maxfd) ? udp_sock : maxfd;
+    }
+    
+    if (uds_stream_sock != -1) {
+        FD_SET(uds_stream_sock, &master_set);
+        maxfd = (uds_stream_sock > maxfd) ? uds_stream_sock : maxfd;
+    }
+    
+    if (uds_dgram_sock != -1) {
+        FD_SET(uds_dgram_sock, &master_set);
+        maxfd = (uds_dgram_sock > maxfd) ? uds_dgram_sock : maxfd;
+    }
+
+    // Store UDS paths in global variables for signal handler cleanup
+    global_stream_path = stream_path;
+    global_datagram_path = datagram_path;
+    
+    // If timeout is set, print a message
+    if (timeout > 0) {
+        signal(SIGALRM, handle_alarm); 
+        printf("Server will automatically shut down after %d seconds of inactivity\n", timeout);
+    }
 
     // Main server loop
     while (1) {
         // Make a copy of the master set for select()
         readfds = master_set;
 
+        // Set alarm only if timeout is defined
+        if (timeout > 0) {
+            alarm(timeout);  // Set alarm to trigger after timeout seconds of inactivity
+        }
+        
         // Wait for activity on any of the sockets (including stdin)
         if (select(maxfd + 1, &readfds, NULL, NULL, NULL) == -1) {
+            // Check if the error was caused by the signal interrupt
+            if (errno == EINTR) {
+                continue;  // If interrupted by signal, just continue the loop
+            }
             perror("select");
             exit(1);
         }
-
+        
+        // Activity detected, cancel the alarm
+        if (timeout > 0) {
+            alarm(0);  // Cancel the alarm since we had activity
+        }
         // Check all file descriptors for activity
         for (int i = 0; i <= maxfd; i++) {
             if (FD_ISSET(i, &readfds)) {
-                if (i == tcp_sock) {
+                
+                // TCP connection handling
+                if (tcp_sock != -1 && i == tcp_sock) {
                     // New TCP client connection
                     struct sockaddr_in client_addr;
                     socklen_t addrlen = sizeof(client_addr);
                     int new_fd = accept(tcp_sock, (struct sockaddr*)&client_addr, &addrlen);
                     if (new_fd == -1) {
-                        perror("accept");
+                        perror("TCP accept");
                     } else if (connected_clients >= MAX_CLIENTS) {
                         // Too many clients connected, reject this connection
                         const char *err_msg = "ERROR: Server reached maximum client limit\n";
                         send(new_fd, err_msg, strlen(err_msg), 0);
                         close(new_fd);
-                        printf("Connection rejected: maximum clients limit reached\n");
+                        printf("TCP connection rejected: maximum clients limit reached\n");
                     } else {
                         // Add new client socket to the monitoring set
                         FD_SET(new_fd, &master_set);
@@ -500,23 +753,61 @@ int main(int argc, char *argv[]) {
                         printf("New TCP connection on socket %d\n", new_fd);
                         connected_clients++;
                     }
-                } else if (i == udp_sock) {
+                } 
+                // UDS stream connection handling
+                else if (uds_stream_sock != -1 && i == uds_stream_sock) {
+                    // New UDS stream client connection
+                    struct sockaddr_un client_addr;
+                    socklen_t addrlen = sizeof(client_addr);
+                    int new_fd = accept(uds_stream_sock, (struct sockaddr*)&client_addr, &addrlen);
+                    if (new_fd == -1) {
+                        perror("UDS stream accept");
+                    } else if (connected_clients >= MAX_CLIENTS) {
+                        // Too many clients connected, reject this connection
+                        const char *err_msg = "ERROR: Server reached maximum client limit\n";
+                        send(new_fd, err_msg, strlen(err_msg), 0);
+                        close(new_fd);
+                        printf("UDS stream connection rejected: maximum clients limit reached\n");
+                    } else {
+                        // Add new client socket to the monitoring set
+                        FD_SET(new_fd, &master_set);
+                        if (new_fd > maxfd - 1) maxfd = new_fd + 1;
+                        printf("New UDS stream connection on socket %d\n", new_fd);
+                        connected_clients++;
+                    }
+                }
+                // UDP datagram handling
+                else if (udp_sock != -1 && i == udp_sock) {
                     // UDP datagram received
                     struct sockaddr_in client_addr;
                     socklen_t addrlen = sizeof(client_addr);
                     int n = recvfrom(udp_sock, buffer, sizeof(buffer), 0,
                                     (struct sockaddr*)&client_addr, &addrlen);
                     if (n < 0) {
-                        perror("recvfrom");
+                        perror("UDP recvfrom");
                     } else {
                         // Null-terminate the received data and process it
                         buffer[n] = '\0';
-                        process_udp_command(buffer, &stock, i, &client_addr, addrlen);
+                        process_udp_command(buffer, &stock, udp_sock, (struct sockaddr*)&client_addr, addrlen);
                     }
-                
+                }
+                // UDS datagram handling
+                else if (uds_dgram_sock != -1 && i == uds_dgram_sock) {
+                    // UDS datagram received
+                    struct sockaddr_un client_addr;
+                    socklen_t addrlen = sizeof(client_addr);
+                    int n = recvfrom(uds_dgram_sock, buffer, sizeof(buffer), 0,
+                                    (struct sockaddr*)&client_addr, &addrlen);
+                    if (n < 0) {
+                        perror("UDS datagram recvfrom");
+                    } else {
+                        // Null-terminate the received data and process it
+                        buffer[n] = '\0';
+                        process_udp_command(buffer, &stock, uds_dgram_sock, (struct sockaddr*)&client_addr, addrlen);
+
+                    }
                 } 
                 /* 
-                 * Added keyboard input handling
                  * Check if activity is from stdin (keyboard) and process GEN commands
                  */
                 else if (i == STDIN_FILENO) {
@@ -530,15 +821,26 @@ int main(int argc, char *argv[]) {
                         }
                         if (strcmp(buffer, "exit") == 0 || strcmp(buffer, "quit") == 0) {
                             printf("Exiting...\n");
-                            close(tcp_sock);
-                            close(udp_sock);
-                            exit(0);  
+                            if (tcp_sock != -1) close(tcp_sock);
+                            if (udp_sock != -1) close(udp_sock);
+                            
+                            // Clean up UDS sockets and remove socket files
+                            if (uds_stream_sock != -1) {
+                                close(uds_stream_sock);
+                                if (stream_path != NULL) unlink(stream_path);
+                            }
+                            
+                            if (uds_dgram_sock != -1) {
+                                close(uds_dgram_sock);
+                                if (datagram_path != NULL) unlink(datagram_path);
+                            }
                         }
                         process_console_command(buffer, &stock);
                     }
                 }
-                else { // Handle data from TCP clients
-                    // Receive data from a TCP client
+                else if (i != STDIN_FILENO && i != tcp_sock && i != udp_sock && 
+                       i != uds_stream_sock && i != uds_dgram_sock) {
+                    // Handle data from TCP or UDS stream clients
                     ssize_t n = recv(i, buffer, sizeof(buffer) - 1, 0);
                     if (n <= 0) {
                         // Connection closed or error
@@ -547,7 +849,6 @@ int main(int argc, char *argv[]) {
                         close(i);  // Close the socket
                         FD_CLR(i, &master_set);  // Remove from monitoring set
                         connected_clients--;  // Decrement client counter
-
                     } else {
                         // Null-terminate the received data and process it
                         buffer[n] = '\0';
@@ -557,4 +858,7 @@ int main(int argc, char *argv[]) {
             }
         }
     }
+
+    
+    return 0;
 }

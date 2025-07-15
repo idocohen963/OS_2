@@ -246,11 +246,6 @@ unsigned long long calculate_drink_production(AtomStock *stock, const char *drin
  */
 int process_console_command(const char *cmd, AtomStock *stock) {
     char op[256], drink_type1[256], drink_type2[256];
-
-    if (strcmp(cmd, "exit") == 0 || strcmp(cmd, "quit") == 0) {
-        printf("Exiting...\n");
-        exit(1);
-    }
     
     // Parse command: GEN <DRINK_TYPE> or GEN <DRINK_TYPE1> <DRINK_TYPE2>
     int n = sscanf(cmd, "%255s %255s %255s", op, drink_type1, drink_type2);
@@ -501,6 +496,11 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    if (TCP_port == -1 || UDP_port == -1) {
+    perror( "Error: Both --tcp-port (-T) and --udp-port (-U) are required arguments.\n");
+    exit(1);
+    }
+
     
     int tcp_sock, udp_sock;
     struct sockaddr_in tcp_addr, udp_addr;
@@ -592,6 +592,7 @@ int main(int argc, char *argv[]) {
         // Check all file descriptors for activity
         for (int i = 0; i <= maxfd; i++) {
             if (FD_ISSET(i, &readfds)) {
+
                 if (i == tcp_sock) {
                     // New TCP client connection
                     struct sockaddr_in client_addr;
@@ -627,23 +628,26 @@ int main(int argc, char *argv[]) {
                     }
                 
                 } 
-                /* 
-                 * Added keyboard input handling
-                 * Check if activity is from stdin (keyboard) and process GEN commands
-                 */
+                
                 else if (i == STDIN_FILENO) {
                     // Console input received
                     if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
-
                         // Remove newline character if present
                         size_t len = strlen(buffer);
                         if (len > 0 && buffer[len-1] == '\n') {
                             buffer[len-1] = '\0';
                         }
+
+                        if (strcmp(buffer, "exit") == 0 || strcmp(buffer, "quit") == 0) {
+                            printf("Exiting...\n");
+                            close(tcp_sock);
+                            close(udp_sock);
+                            exit(0);  
+                        }
                         process_console_command(buffer, &stock);
                     }
                 }
-                else { // Handle data from TCP clients
+                else { 
                     // Receive data from a TCP client
                     ssize_t n = recv(i, buffer, sizeof(buffer) - 1, 0);
                     if (n <= 0) {
@@ -663,9 +667,4 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-
-    // Clean up and close sockets (this code is never reached in the current implementation)
-    close(tcp_sock);
-    close(udp_sock);
-    return 0;
 }

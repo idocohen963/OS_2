@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/time.h>  
 #include <getopt.h>
+#include <sys/un.h>
 
 #define BUFFER_SIZE 1024
 
@@ -113,6 +114,47 @@ int setup_udp_socket(const char *host, const char *port, struct sockaddr_in *ser
     freeaddrinfo(res);
     return sockfd;
 }
+/**
+ * Creates a Unix Domain Socket (UDS) and prepares server address
+ * 
+ * @param socket_path  Path to the UDS file
+ * @param server_addr  Pointer to server address structure to be populated
+ * @return             Created socket file descriptor
+ */
+int setup_uds_socket(const char *socket_path, struct sockaddr_un *server_addr) {
+    int sockfd;
+    
+    // Create socket
+    if ((sockfd = socket(AF_UNIX, SOCK_DGRAM, 0)) == -1) {
+        perror("UDS socket creation failed");
+        exit(EXIT_FAILURE);
+    }
+    
+    // Create a unique client socket path
+    struct sockaddr_un client_addr;
+    memset(&client_addr, 0, sizeof(client_addr));
+    client_addr.sun_family = AF_UNIX;
+    snprintf(client_addr.sun_path, sizeof(client_addr.sun_path), 
+             "/tmp/molecule_client_%d", getpid());
+    
+    // Remove any existing socket file
+    unlink(client_addr.sun_path);
+    
+    // Bind client socket to the path
+    if (bind(sockfd, (struct sockaddr*)&client_addr, sizeof(client_addr)) == -1) {
+        perror("UDS client bind failed");
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+    
+    // Initialize server address structure
+    memset(server_addr, 0, sizeof(struct sockaddr_un));
+    server_addr->sun_family = AF_UNIX;
+    strncpy(server_addr->sun_path, socket_path, sizeof(server_addr->sun_path) - 1);
+    
+    return sockfd;
+}
+
 
 /**
  * Main function - creates UDP socket, receives commands from user and sends them to server
@@ -125,9 +167,10 @@ int main (int argc ,char* argv[]){
     int opt;
     const char *host = NULL;
     const char *port = NULL;
+    const char *socket_path = NULL;
 
     // Process command line options
-    while ((opt = getopt(argc, argv, "h:p:")) != -1) {
+    while ((opt = getopt(argc, argv, "h:p:f:")) != -1) {
         switch (opt) {
             case 'h':
                 host = optarg;
@@ -135,23 +178,51 @@ int main (int argc ,char* argv[]){
             case 'p':
                 port = optarg;
                 break;
+            case 'f':
+                socket_path = optarg;
+                break; 
             default:
-                fprintf(stderr, "Usage: %s -h <hostname/IP> -p <port>\n", argv[0]);
+                fprintf(stderr, "Usage: %s -h <hostname/IP> -p <port> OR %s -f <UDS socket file path>\n", 
+                        argv[0], argv[0]);
                 exit(1);
         }
     }
 
-    // Check if both host and port were provided
-    if (host == NULL || port == NULL) {
-        fprintf(stderr, "Usage: %s -h <hostname/IP> -p <port>\n", argv[0]);
+    // Check for conflicting arguments
+    if ((host != NULL || port != NULL) && socket_path != NULL) {
+        fprintf(stderr, "Error: Cannot specify both IP address/port and UDS socket path\n");
+        fprintf(stderr, "Usage: %s -h <hostname/IP> -p <port> OR %s -f <UDS socket file path>\n", 
+                argv[0], argv[0]);
         exit(1);
     }
 
-    // Set up UDP socket and server address
-    struct sockaddr_in server_addr;
-    int sock = setup_udp_socket(host, port, &server_addr);
-    
+    // Check if valid arguments were provided
+    if (socket_path == NULL && (host == NULL || port == NULL)) {
+        fprintf(stderr, "Usage: %s -h <hostname/IP> -p <port> OR %s -f <UDS socket file path>\n", 
+                argv[0], argv[0]);
+        exit(1);
+    }
+
+    // Socket variables for both UDP and UDS
+    int sock;
+    struct sockaddr_in server_addr_in;
+    struct sockaddr_un server_addr_un;
+    struct sockaddr *server_addr;
+    socklen_t addr_len; 
+
+    // Set up appropriate socket based on arguments
+    if (socket_path != NULL) {
+    sock = setup_uds_socket(socket_path, &server_addr_un);
+    server_addr = (struct sockaddr *)&server_addr_un;
+    addr_len = sizeof(server_addr_un);
+    printf("Unix Domain Socket created successfully (%s)\n", socket_path);
+    } else {
+    sock = setup_udp_socket(host, port, &server_addr_in);
+    server_addr = (struct sockaddr *)&server_addr_in;
+    addr_len = sizeof(server_addr_in);
     printf("UDP socket created successfully\n");
+    }
+
     printf("Enter command: DELIVER <MOLECULE> <AMOUNT>\n");
     printf("Examples: DELIVER WATER 10\n");
     printf("Available molecules: WATER, CARBON DIOXIDE, ALCOHOL, GLUCOSE\n");
@@ -172,12 +243,11 @@ int main (int argc ,char* argv[]){
             
             if (validate_udp_command(command)) {
                 // Send command to server
-                if (sendto(sock, command, strlen(command), 0, 
-                          (struct sockaddr *)&server_addr, sizeof(server_addr)) != -1) {
+                if (sendto(sock, command, strlen(command), 0, server_addr, addr_len) != -1) {
                     printf("Request sent to molecule supplier.\n");
                     
                     // Set up for receiving response
-                    struct sockaddr_in from_addr;
+                    struct sockaddr_storage from_addr;
                     socklen_t from_len = sizeof(from_addr);
                     
                     /* 
@@ -224,7 +294,3 @@ int main (int argc ,char* argv[]){
     close(sock);
     return 0;
 }
-
-
-
-

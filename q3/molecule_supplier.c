@@ -194,7 +194,7 @@ int process_tcp_command(const char *cmd, AtomStock *stock, int client_fd) {
 int process_udp_command(const char *cmd, AtomStock *stock, int udp_sock, struct sockaddr_in *client_addr, socklen_t addrlen) {
     char op[256], molecule1[256], molecule2[256], amount_str[256];
     unsigned int amount;
-    char molecule[512];
+    char molecule[256];
     
     // Parse the command: DELIVER <molecule> <amount> or DELIVER <molecule1> <molecule2> <amount>
     int n = sscanf(cmd, "%255s %255s %255s %255s", op, molecule1, molecule2, amount_str);
@@ -283,7 +283,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Error: Invalid UDP port number %s\n", argv[2]);
         exit(1); }
     
-    int tcp_sock, udp_sock;
+    int tcp_sock, udp_sock, new_sock;
     struct sockaddr_in tcp_addr, udp_addr;
     char buffer[BUFFER_SIZE];
 

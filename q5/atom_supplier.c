@@ -3,11 +3,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <netdb.h>
+#include <netdb.h>     
 #include <ctype.h>
 #include <sys/socket.h>
-#include <getopt.h>
 #include <sys/types.h>
+#include <getopt.h>
+#include <sys/un.h>
 
 #define BUFFER_SIZE 1024
 
@@ -106,6 +107,37 @@ int setup_tcp_socket(const char *host, const char *port) {
 }
 
 /**
+ * Creates a Unix Domain Socket and connects to the server
+ * 
+ * @param socket_path  Path to the UDS file
+ * @return             Connected socket file descriptor, or -1 on error
+ */
+int setup_uds_socket(const char *socket_path) {
+    int sock_fd;
+    struct sockaddr_un addr;
+    
+    // Create socket
+    if ((sock_fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+        perror("socket");
+        return -1;
+    }
+    
+    // Set up address structure
+    memset(&addr, 0, sizeof(struct sockaddr_un));
+    addr.sun_family = AF_UNIX;
+    strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path) - 1);
+    
+    // Connect to server
+    if (connect(sock_fd, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)) == -1) {
+        perror("connect");
+        close(sock_fd);
+        return -1;
+    }
+    
+    return sock_fd;
+}
+
+/**
  * Main function - creates TCP socket, receives commands from user and sends them to server
  * 
  * @param argc  Number of command line arguments
@@ -117,9 +149,10 @@ int main(int argc, char *argv[]) {
     int opt;
     const char *host = NULL;
     const char *port = NULL;
-
+    const char *socket_path = NULL;
+    
     // Process command line options
-    while ((opt = getopt(argc, argv, "h:p:")) != -1) {
+    while ((opt = getopt(argc, argv, "h:p:f:")) != -1) {
         switch (opt) {
             case 'h':
                 host = optarg;
@@ -127,31 +160,57 @@ int main(int argc, char *argv[]) {
             case 'p':
                 port = optarg;
                 break;
+            case 'f':
+                socket_path = optarg;
+                break; 
             default:
-                fprintf(stderr, "Usage: %s -h <hostname/IP> -p <port>\n", argv[0]);
+                fprintf(stderr, "Usage: %s -h <hostname/IP> -p <port> OR %s -f <UDS socket file path>\n", 
+                        argv[0], argv[0]);
                 exit(1);
         }
     }
 
-    // Check if both host and port were provided
-    if (host == NULL || port == NULL) {
-        fprintf(stderr, "Usage: %s -h <hostname/IP> -p <port>\n", argv[0]);
+    // Check for conflicting arguments
+    if ((host != NULL || port != NULL) && socket_path != NULL) {
+        fprintf(stderr, "Error: Cannot specify both IP address/port and UDS socket path\n");
+        fprintf(stderr, "Usage: %s -h <hostname/IP> -p <port> OR %s -f <UDS socket file path>\n", 
+                argv[0], argv[0]);
+        exit(1);
+    }
+
+    // Check if valid arguments were provided
+    if (socket_path == NULL && (host == NULL || port == NULL)) {
+        fprintf(stderr, "Usage: %s -h <hostname/IP> -p <port> OR %s -f <UDS socket file path>\n", 
+                argv[0], argv[0]);
         exit(1);
     }
     
-    // Set up TCP socket and connect to server
-    int sock_fd = setup_tcp_socket(host, port);
-    if (sock_fd == -1) {
-        exit(EXIT_FAILURE);
+    // Set up socket based on provided arguments
+    int sock_fd;
+    
+    if (socket_path != NULL) {
+        // UDS mode
+        sock_fd = setup_uds_socket(socket_path);
+        if (sock_fd == -1) {
+            exit(EXIT_FAILURE);
+        }
+        printf("Connected to atom warehouse server using UDS at %s\n", socket_path);
+    } else {
+        // TCP mode
+        sock_fd = setup_tcp_socket(host, port);
+        if (sock_fd == -1) {
+            exit(EXIT_FAILURE);
+        }
+        printf("Connected to atom warehouse server at %s:%s\n", host, port);
     }
     
-    printf("Connected to atom warehouse server at %s:%s\n", host, port);
     printf("Enter command: ADD <ATOM_TYPE> <AMOUNT>\n");
     printf("Available atom types: CARBON, HYDROGEN, OXYGEN\n");
     
     char command[BUFFER_SIZE];
     char buffer[BUFFER_SIZE];
     
+    // Rest of the main function remains unchanged
     while (1) {
         printf("Enter command: ");
         if (fgets(command, sizeof(command), stdin) == NULL) {
@@ -189,7 +248,6 @@ int main(int argc, char *argv[]) {
             printf("Server response: %s", buffer);
         } else {
             printf("Invalid command format or values.\n");
-        
         }
     }
     
