@@ -2,7 +2,7 @@
 
 ## 📋 Authors
 - **Student Name**: ido cohen  
-- **Mail**: idocohen963@gmail.com
+- **Student Name**: Eitan Halimi
 
 ---
 
@@ -514,33 +514,13 @@ The system includes comprehensive error handling for:
 - **Compiler**: GCC with C99 standard support
 - **Required Standards**: `_POSIX_C_SOURCE=200112L`
 - **Build Tools**: Make, standard POSIX utilities
-
-### **Runtime Dependencies**
-- **Operating System**: Linux/Unix with POSIX socket support
-- **Permissions**: File system write access for UDS and persistent storage
-- **Network**: TCP/UDP port availability (configurable)
-
-### **Optional Features**
-- **Code Coverage**: GCC `--coverage` flag for analysis
-- **Threading**: `-lpthread` for future threading support
-
 ---
 
-## 📚 References & Standards
-
-- **POSIX.1-2001**: Socket programming and file operations
-- **RFC 793**: TCP protocol specification  
-- **RFC 768**: UDP protocol specification
-- **Advanced Programming in the UNIX Environment**: W. Richard Stevens
-- **Unix Network Programming**: W. Richard Stevens
-
----
 
 ## 🎓 Assignment Information
 
 **Course**: Operating Systems - Computer Science  
-**Institution**: Tel Aviv University  
-**Assignment Weight**: 10% final grade + 5% defense  
+**Institution**: Ariel University  
 **Submission Requirements**: Complete source code + coverage reports + recursive Makefile
 
 ---
