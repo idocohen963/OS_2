@@ -1,10 +1,8 @@
 # Operating Systems Assignment 2 - Molecular Warehouse System
-**אוניברסיטת תל אביב - מדעי המחשב**  
-**מערכות הפעלה - תרגיל 2**
 
 ## 📋 Authors
-- **Student Name**: [Your Name]  
-- **Student ID**: [Your ID]
+- **Student Name**: ido cohen  
+- **Mail**: idocohen963@gmail.com
 
 ---
 
@@ -65,7 +63,7 @@ os_2/
 
 ## 🚀 Features by Stage
 
-### **Q1: Foundation - Basic TCP Warehouse**
+### **Q1: Foundation - Basic TCP Warehouse** (15 points)
 **Executable**: `atom_warehouse`, `atom_supplier`
 
 🔧 **Core Functionality**:
@@ -81,7 +79,7 @@ os_2/
 
 ---
 
-### **Q2: Evolution - Molecule Production**
+### **Q2: Evolution - Molecule Production** (15 points)
 **Executable**: `molecule_supplier`, `molecule_requester`
 
 🔧 **Enhanced Functionality**:
@@ -100,8 +98,8 @@ os_2/
 
 ---
 
-### **Q3: Administration - Beverage Production Console**
-**Executable**: `drinks_bar`, `atom_supplier`, `molecule_requester`
+### **Q3: Administration - Beverage Production Console** (15 points)
+**Executable**: `drinks_bar`, `molecule_requester`
 
 🔧 **Administrative Features**:
 - **Console Interface**: Real-time administrative commands via stdin
@@ -517,12 +515,32 @@ The system includes comprehensive error handling for:
 - **Required Standards**: `_POSIX_C_SOURCE=200112L`
 - **Build Tools**: Make, standard POSIX utilities
 
+### **Runtime Dependencies**
+- **Operating System**: Linux/Unix with POSIX socket support
+- **Permissions**: File system write access for UDS and persistent storage
+- **Network**: TCP/UDP port availability (configurable)
+
+### **Optional Features**
+- **Code Coverage**: GCC `--coverage` flag for analysis
+- **Threading**: `-lpthread` for future threading support
+
+---
+
+## 📚 References & Standards
+
+- **POSIX.1-2001**: Socket programming and file operations
+- **RFC 793**: TCP protocol specification  
+- **RFC 768**: UDP protocol specification
+- **Advanced Programming in the UNIX Environment**: W. Richard Stevens
+- **Unix Network Programming**: W. Richard Stevens
+
 ---
 
 ## 🎓 Assignment Information
 
 **Course**: Operating Systems - Computer Science  
-**Institution**: Ariel University  
+**Institution**: Tel Aviv University  
+**Assignment Weight**: 10% final grade + 5% defense  
 **Submission Requirements**: Complete source code + coverage reports + recursive Makefile
 
 ---
