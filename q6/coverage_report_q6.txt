@@ -1,0 +1,132 @@
+=== Q6 Code Coverage Report ===
+Generated on: Tue Jul 15 20:34:13 IDT 2025
+
+Lines executed:84.40% of 109
+Lines executed:80.43% of 419
+Lines executed:84.17% of 120
+Lines executed:81.79% of 648
+
+Coverage files (.gcov) generated:
+atom_supplier.c.gcov
+drinks_bar.c.gcov
+molecule_requester.c.gcov
+
+=== Uncovered Lines (####) ===
+atom_supplier.c.gcov:    #####:   31:        return 0;
+atom_supplier.c.gcov:    #####:   55:        return 0; // Amount must be greater than 0
+atom_supplier.c.gcov:    #####:   80:        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+atom_supplier.c.gcov:    #####:   81:        return -1;
+atom_supplier.c.gcov:    #####:   87:            perror("client: socket");
+atom_supplier.c.gcov:    #####:   88:            continue;
+atom_supplier.c.gcov:    #####:  121:        perror("socket");
+atom_supplier.c.gcov:    #####:  122:        return -1;
+atom_supplier.c.gcov:    #####:  166:            default:
+atom_supplier.c.gcov:    #####:  167:                fprintf(stderr, "Usage: %s -h <hostname/IP> -p <port> OR %s -f <UDS socket file path>\n", 
+atom_supplier.c.gcov:    #####:  169:                exit(1);
+atom_supplier.c.gcov:    #####:  175:        fprintf(stderr, "Error: Cannot specify both IP address/port and UDS socket path\n");
+atom_supplier.c.gcov:    #####:  176:        fprintf(stderr, "Usage: %s -h <hostname/IP> -p <port> OR %s -f <UDS socket file path>\n", 
+atom_supplier.c.gcov:    #####:  178:        exit(1);
+atom_supplier.c.gcov:    #####:  231:                perror("send failed");
+atom_supplier.c.gcov:    #####:  232:                break;
+atom_supplier.c.gcov:    #####:  241:                    perror("recv failed");
+drinks_bar.c.gcov:    #####:  198:            fprintf(stderr, "Error: Exceeds MAX_ATOMS for HYDROGEN\n");
+drinks_bar.c.gcov:    #####:  199:            success = 0;
+drinks_bar.c.gcov:    #####:  205:            fprintf(stderr, "Error: Exceeds MAX_ATOMS for OXYGEN\n");
+drinks_bar.c.gcov:    #####:  206:            success = 0;
+drinks_bar.c.gcov:    #####:  212:        fprintf(stderr, "Error: Unknown atom type '%s'\n", element);
+drinks_bar.c.gcov:    #####:  213:        success = 0;
+drinks_bar.c.gcov:    #####:  254:        fprintf(stderr, "Error: Unknown molecule type '%s'\n", molecule);
+drinks_bar.c.gcov:    #####:  255:        success = 0;
+drinks_bar.c.gcov:    #####:  414:                perror("send to client failed");
+drinks_bar.c.gcov:    #####:  422:                perror("send to client failed");
+drinks_bar.c.gcov:    #####:  427:        fprintf(stderr, "Invalid command from client: %s\n", cmd);
+drinks_bar.c.gcov:    #####:  452:        fprintf(stderr, "Invalid command from client: %s\n", cmd);
+drinks_bar.c.gcov:    #####:  453:        const char *err_msg = "ERROR: Invalid UDP command\n";
+drinks_bar.c.gcov:    #####:  454:        sendto(udp_sock, err_msg, strlen(err_msg), 0, (struct sockaddr*)client_addr, addrlen);
+drinks_bar.c.gcov:    #####:  455:        return 0;
+drinks_bar.c.gcov:    #####:  473:            const char *err_msg = "ERROR: Invalid amount\n";
+drinks_bar.c.gcov:    #####:  474:            sendto(udp_sock, err_msg, strlen(err_msg), 0, client_addr, addrlen);
+drinks_bar.c.gcov:    #####:  475:            return 0;
+drinks_bar.c.gcov:    #####:  482:        const char *err_msg = "ERROR: Amount must be positive\n";
+drinks_bar.c.gcov:    #####:  483:        sendto(udp_sock, err_msg, strlen(err_msg), 0, client_addr, addrlen);
+drinks_bar.c.gcov:    #####:  484:        return 0;
+drinks_bar.c.gcov:    #####:  493:            perror("sendto to client failed");
+drinks_bar.c.gcov:    #####:  501:            perror("sendto to client failed");
+drinks_bar.c.gcov:    #####:  631:            perror("Failed to open or create save file");
+drinks_bar.c.gcov:    #####:  632:            exit(1);
+drinks_bar.c.gcov:    #####:  638:            perror("fstat");
+drinks_bar.c.gcov:    #####:  639:            close(lock_fd);
+drinks_bar.c.gcov:    #####:  640:            exit(1);
+drinks_bar.c.gcov:    #####:  649:                perror("ftruncate");
+drinks_bar.c.gcov:    #####:  650:                close(lock_fd);
+drinks_bar.c.gcov:    #####:  651:                exit(1);
+drinks_bar.c.gcov:    #####:  658:                perror("mmap failed on new file");
+drinks_bar.c.gcov:    #####:  659:                close(lock_fd);
+drinks_bar.c.gcov:    #####:  660:                exit(1);
+drinks_bar.c.gcov:    #####:  672:                perror("mmap failed on existing file");
+drinks_bar.c.gcov:    #####:  673:                close(lock_fd);
+drinks_bar.c.gcov:    #####:  674:                exit(1);
+drinks_bar.c.gcov:    #####:  700:            perror("TCP socket creation failed");
+drinks_bar.c.gcov:    #####:  701:            exit(1);
+drinks_bar.c.gcov:    #####:  720:            perror("UDP socket creation failed");
+drinks_bar.c.gcov:    #####:  722:            close(tcp_sock);
+drinks_bar.c.gcov:    #####:  723:            exit(1);
+drinks_bar.c.gcov:    #####:  734:            perror("UDP bind failed");
+drinks_bar.c.gcov:    #####:  736:            close(tcp_sock);
+drinks_bar.c.gcov:    #####:  737:            close(udp_sock);
+drinks_bar.c.gcov:    #####:  738:            exit(1);
+drinks_bar.c.gcov:    #####:  747:            perror("UDS stream socket creation failed");
+drinks_bar.c.gcov:    #####:  748:            exit(1);
+drinks_bar.c.gcov:    #####:  761:            perror("UDS stream bind failed");
+drinks_bar.c.gcov:    #####:  763:            close(uds_stream_sock);
+drinks_bar.c.gcov:    #####:  764:            exit(1);
+drinks_bar.c.gcov:    #####:  769:            perror("UDS datagram socket creation failed");
+drinks_bar.c.gcov:    #####:  771:            close(uds_stream_sock);
+drinks_bar.c.gcov:    #####:  772:            unlink(stream_path);
+drinks_bar.c.gcov:    #####:  773:            exit(1);
+drinks_bar.c.gcov:    #####:  786:            perror("UDS datagram bind failed");
+drinks_bar.c.gcov:    #####:  788:            close(uds_stream_sock);
+drinks_bar.c.gcov:    #####:  789:            close(uds_dgram_sock);
+drinks_bar.c.gcov:    #####:  790:            unlink(stream_path);
+drinks_bar.c.gcov:    #####:  791:            exit(1);
+drinks_bar.c.gcov:    #####:  800:            perror("TCP listen failed");
+drinks_bar.c.gcov:    #####:  802:            close(tcp_sock);
+drinks_bar.c.gcov:    #####:  803:            close(udp_sock);
+drinks_bar.c.gcov:    #####:  804:            exit(1);
+drinks_bar.c.gcov:    #####:  811:            perror("UDS stream listen failed");
+drinks_bar.c.gcov:    #####:  813:            close(uds_stream_sock);
+drinks_bar.c.gcov:    #####:  814:            close(uds_dgram_sock);
+drinks_bar.c.gcov:    #####:  815:            unlink(stream_path);
+drinks_bar.c.gcov:    #####:  816:            unlink(datagram_path);
+drinks_bar.c.gcov:    #####:  817:            exit(1);
+drinks_bar.c.gcov:    #####:  883:            if (errno == EINTR) {
+drinks_bar.c.gcov:    #####:  884:                continue;  // If interrupted by signal, just continue the loop
+drinks_bar.c.gcov:    #####:  886:            perror("select");
+drinks_bar.c.gcov:    #####:  887:            exit(1);
+drinks_bar.c.gcov:    #####:  905:                        perror("TCP accept");
+drinks_bar.c.gcov:    #####:  907:                        printf("TCP connection rejected: maximum clients limit reached\n");
+drinks_bar.c.gcov:    #####:  908:                        close(new_fd);
+drinks_bar.c.gcov:    #####:  924:                        perror("UDS stream accept");
+drinks_bar.c.gcov:    #####:  926:                        printf("UDS stream connection rejected: maximum clients limit reached\n");
+drinks_bar.c.gcov:    #####:  927:                        close(new_fd);
+drinks_bar.c.gcov:    #####:  944:                        perror("UDP recvfrom");
+drinks_bar.c.gcov:    #####:  958:                        perror("UDS datagram recvfrom");
+molecule_requester.c.gcov:    #####:   46:        return 0;
+molecule_requester.c.gcov:    #####:   58:        return 0;
+molecule_requester.c.gcov:    #####:   93:        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+molecule_requester.c.gcov:    #####:   94:        exit(1);
+molecule_requester.c.gcov:    #####:  101:            continue;
+molecule_requester.c.gcov:    #####:  107:        fprintf(stderr, "Failed to create socket\n");
+molecule_requester.c.gcov:    #####:  108:        exit(EXIT_FAILURE);
+molecule_requester.c.gcov:    #####:  129:        perror("UDS socket creation failed");
+molecule_requester.c.gcov:    #####:  130:        exit(EXIT_FAILURE);
+molecule_requester.c.gcov:    #####:  145:        perror("UDS client bind failed");
+molecule_requester.c.gcov:    #####:  146:        close(sockfd);
+molecule_requester.c.gcov:    #####:  147:        exit(EXIT_FAILURE);
+molecule_requester.c.gcov:    #####:  184:            default:
+molecule_requester.c.gcov:    #####:  185:                fprintf(stderr, "Usage: %s -h <hostname/IP> -p <port> OR %s -f <UDS socket file path>\n", 
+molecule_requester.c.gcov:    #####:  187:                exit(1);
+molecule_requester.c.gcov:    #####:  201:        fprintf(stderr, "Usage: %s -h <hostname/IP> -p <port> OR %s -f <UDS socket file path>\n", 
+molecule_requester.c.gcov:    #####:  203:        exit(1);
+molecule_requester.c.gcov:    #####:  271:                        perror("setsockopt failed");
+molecule_requester.c.gcov:    #####:  284:                    perror("sendto failed");

@@ -35,7 +35,7 @@ clean:
 	@pkill atom_supplier 2>/dev/null || true
 	@pkill molecule_requester 2>/dev/null || true
 
-ש'///'2333333333333333333333'/		/	///////////////////////////////////////////////////					# Clean socket files
+# Clean socket files
 clean-sockets:
 	rm -f /tmp/*.sock *.sock
 
