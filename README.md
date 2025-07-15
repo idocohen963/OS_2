@@ -37,8 +37,8 @@ os_2/
 │   └── Makefile
 ├── q3/                    # Administrative Console Interface
 │   ├── drinks_bar.c       # Enhanced server with drink calculations
-│   ├── molecule_supplier.c # Reused from Q2
-│   ├── molecule_requester.c # Reused from Q2
+│   ├── atom_supplier.c    # TCP client for atom addition (from Q1)
+│   ├── molecule_requester.c # UDP client for molecule requests (from Q2)
 │   └── Makefile
 ├── q4/                    # Command-Line Interface & Timeout Support
 │   ├── drinks_bar.c       # Feature-complete server with CLI options
@@ -65,7 +65,7 @@ os_2/
 
 ## 🚀 Features by Stage
 
-### **Q1: Foundation - Basic TCP Warehouse** (15 points)
+### **Q1: Foundation - Basic TCP Warehouse**
 **Executable**: `atom_warehouse`, `atom_supplier`
 
 🔧 **Core Functionality**:
@@ -81,7 +81,7 @@ os_2/
 
 ---
 
-### **Q2: Evolution - Molecule Production** (15 points)
+### **Q2: Evolution - Molecule Production**
 **Executable**: `molecule_supplier`, `molecule_requester`
 
 🔧 **Enhanced Functionality**:
@@ -100,8 +100,8 @@ os_2/
 
 ---
 
-### **Q3: Administration - Beverage Production Console** (15 points)
-**Executable**: `drinks_bar`, `molecule_requester`
+### **Q3: Administration - Beverage Production Console**
+**Executable**: `drinks_bar`, `atom_supplier`, `molecule_requester`
 
 🔧 **Administrative Features**:
 - **Console Interface**: Real-time administrative commands via stdin
@@ -119,7 +119,7 @@ os_2/
 
 ---
 
-### **Q4: Professionalization - CLI & Timeout Support** (20 points)
+### **Q4: Professionalization - CLI & Timeout Support**
 **Executable**: `drinks_bar`, `atom_supplier`, `molecule_requester`
 
 🔧 **Professional Features**:
@@ -150,7 +150,7 @@ os_2/
 
 ---
 
-### **Q5: Modernization - Unix Domain Sockets** (15 points)
+### **Q5: Modernization - Unix Domain Sockets**
 **Executable**: `drinks_bar`, `atom_supplier`, `molecule_requester`
 
 🔧 **Transport Layer Flexibility**:
@@ -177,7 +177,7 @@ os_2/
 
 ---
 
-### **Q6: Production-Ready - Persistent Storage & Concurrency** (20 points + 5 bonus)
+### **Q6: Production-Ready - Persistent Storage & Concurrency**
 **Executable**: `drinks_bar`, `atom_supplier`, `molecule_requester`
 
 🔧 **Enterprise-Grade Features**:
@@ -237,80 +237,166 @@ make clean
 ## 📖 Usage Examples
 
 ### **Q1: Basic TCP Warehouse**
+**Executables**: `atom_warehouse`, `atom_supplier`
+
 ```bash
 # Terminal 1 - Start atom warehouse server
 cd q1
-./atom_warehouse 12345
+./atom_warehouse <TCP_PORT>
+# Example: ./atom_warehouse 12345
 
-# Terminal 2 - Connect client supplier
-./atom_supplier 127.0.0.1 12345
-# Follow interactive menu to add atoms
+# Terminal 2 - Connect atom supplier client  
+./atom_supplier <HOSTNAME/IP> <TCP_PORT>
+# Example: ./atom_supplier 127.0.0.1 12345
+# Example: ./atom_supplier localhost 12345
 ```
 
 ### **Q2: Molecule Production System**
+**Executables**: `molecule_supplier`, `molecule_requester`
+
 ```bash
 # Terminal 1 - Start molecule supplier server
-cd q2  
-./molecule_supplier 12345 12346
+cd q2
+./molecule_supplier <TCP_PORT> <UDP_PORT>
+# Example: ./molecule_supplier 12345 12346
 
 # Terminal 2 - Start molecule requester client
-./molecule_requester 127.0.0.1 12345 12346
-# Use menu to add atoms (TCP) or request molecules (UDP)
+./molecule_requester <HOSTNAME/IP> <PORT>
+# Example: ./molecule_requester 127.0.0.1 12345
+# Example: ./molecule_requester localhost 12345
 ```
 
 ### **Q3: Administrative Beverage Console**
+**Executables**: `drinks_bar`, `atom_supplier`, `molecule_requester`
+
 ```bash
-# Terminal 1 - Start drinks bar with admin console
+# Terminal 1 - Start drinks bar server with admin console
 cd q3
-./drinks_bar 12345 12346
+./drinks_bar <TCP_PORT> <UDP_PORT>
+# Example: ./drinks_bar 12345 12346
+# Server console supports GEN commands for drink calculations
 
-# In Terminal 1, type admin commands:
-GEN SOFT DRINK    # Calculate soft drink production capacity
-GEN VODKA         # Calculate vodka production capacity  
-GEN CHAMPAGNE     # Calculate champagne production capacity
+# Terminal 2 - Connect atom supplier client (TCP - for adding atoms)
+./atom_supplier <HOSTNAME/IP> <TCP_PORT>
+# Example: ./atom_supplier 127.0.0.1 12345
 
-# Terminal 2 - Connect clients normally
-./molecule_requester 127.0.0.1 12345 12346
+# Terminal 3 - Connect molecule requester client (UDP - for requesting molecules)
+./molecule_requester <HOSTNAME/IP> <UDP_PORT>
+# Example: ./molecule_requester 127.0.0.1 12345
+# Note: Client connects to TCP port, UDP communication is handled automatically
 ```
 
 ### **Q4: Professional CLI Server**
-```bash
-# Start server with initial inventory and 60-second timeout
-cd q4
-./drinks_bar -T 12345 -U 12346 -c 1000 -o 2000 -h 3000 -t 60
+**Executables**: `drinks_bar`, `atom_supplier`, `molecule_requester`
 
-# Connect client with hostname resolution
-./atom_supplier -h localhost -p 12345
-./molecule_requester -h 127.0.0.1 -p 12345 -u 12346
+**Server Options**:
+```bash
+cd q4
+./drinks_bar -T <tcp-port> -U <udp-port> [OPTIONS]
+
+Required:
+  -T, --tcp-port <port>      TCP listening port
+  -U, --udp-port <port>      UDP listening port
+
+Optional:
+  -o, --oxygen <count>       Initial oxygen atoms
+  -c, --carbon <count>       Initial carbon atoms  
+  -h, --hydrogen <count>     Initial hydrogen atoms
+  -t, --timeout <seconds>    Inactivity timeout
+
+# Examples:
+./drinks_bar -T 12345 -U 12346
+./drinks_bar -T 12345 -U 12346 -c 1000 -o 2000 -h 3000 -t 60
+```
+
+**Client Options**:
+```bash
+# Atom supplier client
+./atom_supplier -h <hostname/IP> -p <port>
+# Example: ./atom_supplier -h localhost -p 12345
+
+# Molecule requester client  
+./molecule_requester -h <hostname/IP> -p <port>
+# Example: ./molecule_requester -h 127.0.0.1 -p 12345
 ```
 
 ### **Q5: Unix Domain Sockets**
-```bash
-# Terminal 1 - Start UDS server  
-cd q5
-./drinks_bar -s /tmp/warehouse_stream.sock -d /tmp/warehouse_dgram.sock
+**Executables**: `drinks_bar`, `atom_supplier`, `molecule_requester`
 
-# Terminal 2 - Connect via UDS
+**Server Transport Options**:
+```bash
+cd q5
+# Option 1: Network Sockets (TCP/UDP)
+./drinks_bar -T <tcp-port> -U <udp-port> [ATOM_OPTIONS] [TIMEOUT]
+
+# Option 2: Unix Domain Sockets
+./drinks_bar -s <stream-path> -d <datagram-path> [ATOM_OPTIONS] [TIMEOUT]
+
+# Examples:
+./drinks_bar -T 12345 -U 12346 -c 1000 -o 2000 -h 3000
+./drinks_bar -s /tmp/warehouse_stream.sock -d /tmp/warehouse_dgram.sock -c 1000
+```
+
+**Client Transport Options**:
+```bash
+# Option 1: Network Connection
+./atom_supplier -h <hostname/IP> -p <port>
+./molecule_requester -h <hostname/IP> -p <port>
+
+# Option 2: Unix Domain Socket Connection
+./atom_supplier -f <UDS_socket_path>
+./molecule_requester -f <UDS_socket_path>
+
+# Examples:
+./atom_supplier -h 127.0.0.1 -p 12345
 ./atom_supplier -f /tmp/warehouse_stream.sock
-./molecule_requester -f /tmp/warehouse_stream.sock -d /tmp/warehouse_dgram.sock
+./molecule_requester -f /tmp/warehouse_stream.sock
 ```
 
 ### **Q6: Persistent Multi-Process System**
+**Executables**: `drinks_bar`, `atom_supplier`, `molecule_requester`
+
+**Server Persistence Options**:
 ```bash
-# Terminal 1 - Start first server instance with persistent storage
 cd q6
+# Option 1: Network + Persistence
+./drinks_bar -T <tcp-port> -U <udp-port> [OPTIONS] [-f <save-file>]
+
+# Option 2: UDS + Persistence  
+./drinks_bar -s <stream-path> -d <datagram-path> [OPTIONS] [-f <save-file>]
+
+All Server Options:
+  -T, --tcp-port <port>        TCP listening port
+  -U, --udp-port <port>        UDP listening port  
+  -s, --stream-path <path>     UDS stream socket path
+  -d, --datagram-path <path>   UDS datagram socket path
+  -o, --oxygen <count>         Initial oxygen atoms
+  -c, --carbon <count>         Initial carbon atoms
+  -h, --hydrogen <count>       Initial hydrogen atoms
+  -t, --timeout <seconds>      Inactivity timeout
+  -f, --save-file <filepath>   Persistent storage file
+
+# Examples:
 ./drinks_bar -T 12345 -U 12346 -f warehouse.dat -c 5000 -o 3000 -h 7000
-
-# Terminal 2 - Start second server instance (shares same inventory!)
-./drinks_bar -T 12347 -U 12348 -f warehouse.dat
-
-# Terminal 3 - Connect clients to either server
-./atom_supplier -h 127.0.0.1 -p 12345
-./molecule_requester -h 127.0.0.1 -p 12347 -u 12348
-
-# After server restart, inventory persists automatically
+./drinks_bar -s /tmp/stream.sock -d /tmp/dgram.sock -f warehouse.dat -c 1000
 ```
 
+**Client Connection Options**:
+```bash
+# Option 1: Network Connection
+./atom_supplier -h <hostname/IP> -p <port>
+./molecule_requester -h <hostname/IP> -p <port>
+
+# Option 2: Unix Domain Socket Connection
+./atom_supplier -f <UDS_socket_path>
+./molecule_requester -f <UDS_socket_path>
+
+# Examples:
+./atom_supplier -h 127.0.0.1 -p 12345
+./molecule_requester -h localhost -p 12345
+./atom_supplier -f /tmp/stream.sock
+./molecule_requester -f /tmp/stream.sock
+```
 ---
 
 ## 🎮 Supported Commands
@@ -424,59 +510,19 @@ The system includes comprehensive error handling for:
 
 ---
 
-## 📊 Performance Characteristics
-
-### **Scalability Metrics**
-- **Maximum Concurrent Clients**: 100 (configurable via `MAX_CLIENTS`)
-- **Maximum Atoms per Type**: 10¹⁸ (1 quintillion)
-- **Buffer Size**: 1024 bytes per client connection
-- **Memory Footprint**: Minimal with memory-mapped persistence
-
-### **Network Performance**
-- **TCP Throughput**: Optimized for atom addition operations
-- **UDP Latency**: Low-latency molecule delivery requests
-- **UDS Performance**: Superior to network sockets for local communication
-
-### **Storage Performance**
-- **Memory-Mapped I/O**: Zero-copy read/write operations
-- **File Locking Overhead**: Minimal with shared/exclusive lock optimization
-- **Persistence**: Immediate state synchronization across process restarts
-
----
-
 ## 🔍 System Requirements
 
 ### **Compilation Environment**
 - **Compiler**: GCC with C99 standard support
-- **Required Standards**: `_POSIX_C_SOURCE=200112L`, `_GNU_SOURCE`
+- **Required Standards**: `_POSIX_C_SOURCE=200112L`
 - **Build Tools**: Make, standard POSIX utilities
-
-### **Runtime Dependencies**
-- **Operating System**: Linux/Unix with POSIX socket support
-- **Permissions**: File system write access for UDS and persistent storage
-- **Network**: TCP/UDP port availability (configurable)
-
-### **Optional Features**
-- **Code Coverage**: GCC `--coverage` flag for analysis
-- **Threading**: `-lpthread` for future threading support
-
----
-
-## 📚 References & Standards
-
-- **POSIX.1-2001**: Socket programming and file operations
-- **RFC 793**: TCP protocol specification  
-- **RFC 768**: UDP protocol specification
-- **Advanced Programming in the UNIX Environment**: W. Richard Stevens
-- **Unix Network Programming**: W. Richard Stevens
 
 ---
 
 ## 🎓 Assignment Information
 
 **Course**: Operating Systems - Computer Science  
-**Institution**: Tel Aviv University  
-**Assignment Weight**: 10% final grade + 5% defense  
+**Institution**: Ariel University  
 **Submission Requirements**: Complete source code + coverage reports + recursive Makefile
 
 ---
