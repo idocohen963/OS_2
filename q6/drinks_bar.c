@@ -54,7 +54,6 @@
  * - שיתוף מלאי בין תהליכים מרובים
  * - עמידות נתונים (המלאי נשמר גם אחרי סגירת השרת)
  * - ביצועים גבוהים (mmap מהיר יותר מקריאה/כתיבה רגילה)
- * - בטיחות קונקרנטיות (מניעת מצבי race condition)
  * 
  * Server Execution:
  * ./drinks_bar (-T <tcp-port> -U <udp-port>) OR (-s <UDS-stream-path> -d <UDS-datagram-path>) 
@@ -660,7 +659,7 @@ int main(int argc, char *argv[]) {
                 exit(1);
             }
             
-            // Initialize the memory-mapped stock with values from command line (or defaults)
+            // Initialize the memory-mapped stock with values from command line
             *stock_ptr = in_memory_stock;
 
         } else {

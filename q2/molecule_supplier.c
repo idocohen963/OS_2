@@ -22,6 +22,7 @@
  * 
  * הפעלת השרת:
  * ./molecule_supplier <TCP port> <UDP port>
+ * Use Ctrl+C to exit the server.
  */
 
 #include <stdio.h>
@@ -36,6 +37,13 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/select.h>
+#include <signal.h>
+
+// Simple signal handler for graceful exit on Ctrl+C
+void handle_sig(int sig) {
+    printf("\nServer exiting.\n");
+    exit(0);
+}
 
 #define MAX_CLIENTS 100       // Maximum number of TCP clients that can be connected simultaneously
 #define BUFFER_SIZE 1024      // Size of the buffer for receiving data
@@ -328,6 +336,10 @@ int main(int argc, char *argv[]) {
     }
 
     printf("Server listening: TCP on port %d, UDP on port %d\n", TCP_port, UDP_port);
+    printf("Press Ctrl+C to exit the server.\n");
+
+    // Register signal handler for Ctrl+C
+    signal(SIGINT, handle_sig);
 
     // Initialize file descriptor sets for select()
     fd_set readfds, master_set;
