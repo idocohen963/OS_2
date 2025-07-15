@@ -1,7 +1,7 @@
 # Operating Systems Assignment 2 - Molecular Warehouse System
 
 ## 📋 Authors
-- **Student Name**: ido cohen  
+- **Student Name**: Ido Cohen  
 - **Student Name**: Eitan Halimi
 
 ---
