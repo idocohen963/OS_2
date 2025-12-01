@@ -58,7 +58,7 @@ OS_2/
 │   ├── atom_supplier.c        # לקוח רב-תחבורה
 │   ├── molecule_requester.c   # לקוח רב-תחבורה
 │   └── Makefile
-├── q6/                        # שלב 6 - מקבוליות תהליכים (+mmap, flock)
+├── q6/                        # שלב 6 - מקביליות תהליכים (+mmap, flock)
 │   ├── drinks_bar.c           # שרת עם אחסון מתמיד
 │   ├── atom_supplier.c        # לקוח סופי
 │   ├── molecule_requester.c   # לקוח סופי
@@ -87,7 +87,7 @@ OS_2/
     ↓ + UDS
 שלב 5 (רב-תחבורה)
     ↓ + mmap + flock
-שלב 6 (מקבוליות + אחסון מתמיד)
+שלב 6 (מקביליות + אחסון מתמיד)
 ```
 
 ---
@@ -300,7 +300,7 @@ cd q5
 
 ---
 
-## 📔 שלב 6 - מקבוליות תהליכים (20 נקודות)
+## 📔 שלב 6 - מקביליות תהליכים (20 נקודות)
 ### Stage 6 - Process Concurrency (20 points)
 
 **קבצים**: `drinks_bar.c`, `atom_supplier.c`, `molecule_requester.c`
