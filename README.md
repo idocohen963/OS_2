@@ -1,528 +1,443 @@
-# Operating Systems Assignment 2 - Molecular Warehouse System
-
-## 📋 Authors
-- **Student Name**: Ido Cohen  
-- **Student Name**: Eitan Halimi
+# 🧪 מערכות הפעלה - תרגיל 2: ספירת מולקולות
+## Operating Systems Assignment 2 - Molecular Warehouse System
 
 ---
 
-## 🎯 Project Overview
-
-This project implements a sophisticated **molecular warehouse management system** that demonstrates advanced concepts in systems programming, network communication, and inter-process coordination. The system evolves through 6 progressive stages, each introducing new capabilities and technologies.
-
-The warehouse manages three types of atoms (**Carbon**, **Hydrogen**, **Oxygen**) and can produce complex molecules (**H₂O**, **CO₂**, **C₂H₆O**, **C₆H₁₂O₆**) and beverages (**Soft Drinks**, **Vodka**, **Champagne**) based on chemical formulas.
-
-### 🔬 Key Capabilities
-- **Multi-Protocol Communication**: TCP, UDP, Unix Domain Sockets
-- **Concurrent Processing**: Handle multiple clients simultaneously  
-- **Persistent Storage**: Memory-mapped files with process synchronization
-- **Real-time Inventory**: Live atom counting with overflow protection (up to 10¹⁸ atoms)
-- **Drink Production**: Calculate beverage quantities based on molecular recipes
+## 📋 מחברים / Authors
+- **עידו כהן** - Ido Cohen
+- **איתן חלימי** - Eitan Halimi
 
 ---
 
-## 📁 Project Structure
+## 🎯 סקירת הפרויקט / Project Overview
+
+פרויקט זה מממש **מערכת ניהול מחסן מולקולות מתקדמת** המדגימה מושגים מתקדמים בתכנות מערכות, תקשורת רשתית וקואורדינציה בין תהליכים. המערכת מתפתחת דרך **6 שלבים פרוגרסיביים**, כאשר כל שלב מוסיף יכולות חדשות על גבי השלב הקודם.
+
+This project implements a sophisticated **molecular warehouse management system** that demonstrates advanced concepts in systems programming, network communication, and inter-process coordination. The system evolves through **6 progressive stages**, where each stage builds upon and extends the previous one.
+
+### 🔬 המחסן מנהל:
+- **שלושה סוגי אטומים**: פחמן (Carbon), מימן (Hydrogen), חמצן (Oxygen)
+- **ארבע מולקולות**: H₂O (מים), CO₂ (פחמן דו-חמצני), C₂H₆O (אלכוהול), C₆H₁₂O₆ (גלוקוז)
+- **שלושה משקאות**: Soft Drink, Vodka, Champagne
+
+### 🔧 יכולות מרכזיות:
+| יכולת | תיאור |
+|-------|--------|
+| **תקשורת מרובת פרוטוקולים** | TCP, UDP, Unix Domain Sockets |
+| **עיבוד מקבילי** | טיפול במספר לקוחות בו-זמנית |
+| **אחסון מתמיד** | קבצים ממופים לזיכרון עם סנכרון תהליכים |
+| **מלאי בזמן אמת** | ספירת אטומים עם הגנה מפני גלישה (עד 10¹⁸) |
+| **ייצור משקאות** | חישוב כמויות משקאות לפי מתכונים כימיים |
+
+---
+
+## 📁 מבנה הפרויקט / Project Structure
 
 ```
-os_2/
-├── q1/                    # Basic TCP Client-Server Architecture
-│   ├── atom_warehouse.c   # TCP server for atom management
-│   ├── atom_supplier.c    # Interactive TCP client
+OS_2/
+├── q1/                        # שלב 1 - מחסן אטומים (TCP בסיסי)
+│   ├── atom_warehouse.c       # שרת TCP לניהול אטומים
+│   ├── atom_supplier.c        # לקוח TCP אינטראקטיבי
 │   └── Makefile
-├── q2/                    # Multi-Protocol Server (TCP + UDP)
-│   ├── molecule_supplier.c # Dual-protocol server
-│   ├── molecule_requester.c # Universal client
+├── q2/                        # שלב 2 - בקשת מולקולות (+UDP)
+│   ├── molecule_supplier.c    # שרת TCP+UDP
+│   ├── molecule_requester.c   # לקוח UDP
 │   └── Makefile
-├── q3/                    # Administrative Console Interface
-│   ├── drinks_bar.c       # Enhanced server with drink calculations
-│   ├── atom_supplier.c    # TCP client for atom addition (from Q1)
-│   ├── molecule_requester.c # UDP client for molecule requests (from Q2)
+├── q3/                        # שלב 3 - קונסול (+stdin)
+│   ├── drinks_bar.c           # שרת עם ממשק קונסול
+│   ├── atom_supplier.c        # לקוח TCP
+│   ├── molecule_requester.c   # לקוח UDP
 │   └── Makefile
-├── q4/                    # Command-Line Interface & Timeout Support
-│   ├── drinks_bar.c       # Feature-complete server with CLI options
-│   ├── atom_supplier.c    # Enhanced client with argument parsing
-│   ├── molecule_requester.c # Enhanced client with argument parsing
+├── q4/                        # שלב 4 - אופציות התחלה (+getopt, timeout)
+│   ├── drinks_bar.c           # שרת עם CLI מתקדם
+│   ├── atom_supplier.c        # לקוח עם אופציות
+│   ├── molecule_requester.c   # לקוח עם אופציות
 │   └── Makefile
-├── q5/                    # Unix Domain Sockets Implementation
-│   ├── drinks_bar.c       # Multi-transport server
-│   ├── atom_supplier.c    # Multi-transport client
-│   ├── molecule_requester.c # Multi-transport client
+├── q5/                        # שלב 5 - UDS (+Unix Domain Sockets)
+│   ├── drinks_bar.c           # שרת רב-תחבורה
+│   ├── atom_supplier.c        # לקוח רב-תחבורה
+│   ├── molecule_requester.c   # לקוח רב-תחבורה
 │   └── Makefile
-├── q6/                    # Persistent Storage & Process Synchronization
-│   ├── drinks_bar.c       # Production-ready server with mmap
-│   ├── atom_supplier.c    # Final client implementation
-│   ├── molecule_requester.c # Final client implementation
-│   ├── coverage_report_q6.txt # Code coverage analysis
+├── q6/                        # שלב 6 - מקביליות תהליכים (+mmap, flock)
+│   ├── drinks_bar.c           # שרת עם אחסון מתמיד
+│   ├── atom_supplier.c        # לקוח סופי
+│   ├── molecule_requester.c   # לקוח סופי
+│   ├── coverage_report_q6.txt # דו"ח כיסוי קוד
 │   └── Makefile
-├── Makefile               # Recursive build system
-├── מטלה.txt              # Assignment specifications (Hebrew)
-└── README.md              # This documentation
+├── Makefile                   # מערכת בנייה רקורסיבית
+├── מטלה.txt                   # מפרט המטלה
+└── README.md                  # תיעוד זה
 ```
 
 ---
 
-## 🚀 Features by Stage
+## 🚀 שלבי הפיתוח - בנייה הדרגתית / Progressive Development Stages
 
-### **Q1: Foundation - Basic TCP Warehouse** (15 points)
-**Executable**: `atom_warehouse`, `atom_supplier`
+### 📌 הקשר בין השלבים
+כל שלב **מרחיב ומוסיף** על השלב הקודם. הפונקציונליות הקודמת נשמרת תמיד:
 
-🔧 **Core Functionality**:
-- **TCP Server**: Listens for client connections and manages atom inventory
-- **Interactive Client**: Menu-driven interface for atom additions
-- **Inventory Management**: Real-time tracking of Carbon, Hydrogen, Oxygen atoms
-- **Overflow Protection**: Validates operations against 10¹⁸ atom limit
+```
+שלב 1 (TCP בסיסי)
+    ↓ + UDP
+שלב 2 (TCP + UDP)
+    ↓ + stdin קונסול
+שלב 3 (TCP + UDP + קונסול)
+    ↓ + getopt + timeout
+שלב 4 (CLI מתקדם)
+    ↓ + UDS
+שלב 5 (רב-תחבורה)
+    ↓ + mmap + flock
+שלב 6 (מקביליות + אחסון מתמיד)
+```
 
-**Key Technologies**:
+---
+
+## 📗 שלב 1 - מחסן אטומים (15 נקודות)
+### Stage 1 - Atom Warehouse (15 points)
+
+**קבצים**: `atom_warehouse.c`, `atom_supplier.c`
+
+### 🆕 מה חדש בשלב זה:
+- **שרת TCP בסיסי** - מאזין לחיבורים ומנהל מלאי אטומים
+- **I/O Multiplexing** - שימוש ב-`select()` לטיפול בלקוחות מרובים
+- **ניהול מלאי** - מעקב אחר Carbon, Hydrogen, Oxygen (עד 10¹⁸)
+
+### פקודות נתמכות:
+```
+ADD CARBON <כמות>
+ADD HYDROGEN <כמות>
+ADD OXYGEN <כמות>
+```
+
+### הרצה:
+```bash
+# Terminal 1 - שרת
+cd q1
+./atom_warehouse 12345
+
+# Terminal 2 - לקוח
+./atom_supplier localhost 12345
+```
+
+### טכנולוגיות:
 - `socket()`, `bind()`, `listen()`, `accept()`
-- `select()` for I/O multiplexing
-- Client connection management
+- `select()` - I/O multiplexing
+- `recv()`, `send()` - תקשורת TCP
 
 ---
 
-### **Q2: Evolution - Molecule Production** (15 points)
-**Executable**: `molecule_supplier`, `molecule_requester`
+## 📘 שלב 2 - בקשת מולקולות (15 נקודות)
+### Stage 2 - Molecule Requests (15 points)
 
-🔧 **Enhanced Functionality**:
-- **Dual-Protocol Server**: Simultaneous TCP (atoms) + UDP (molecules) support
-- **Molecule Synthesis**: Automated production of complex molecules
-- **Chemical Formulas**: 
-  - **H₂O** (Water): 2H + 1O
-  - **CO₂** (Carbon Dioxide): 1C + 2O  
-  - **C₂H₆O** (Alcohol): 2C + 6H + 1O
-  - **C₆H₁₂O₆** (Glucose): 6C + 12H + 6O
+**קבצים**: `molecule_supplier.c`, `molecule_requester.c`
 
-**Key Technologies**:
-- UDP datagram processing
-- Multi-protocol socket management
-- Molecular arithmetic and validation
+### 🆕 מה חדש בשלב זה (מעבר לשלב 1):
+- **תמיכה ב-UDP** - לבקשות מולקולות
+- **הפחתת אטומים** - יצירת מולקולות מהמלאי
+- **ארבע מולקולות**:
 
----
+| מולקולה | נוסחה | אטומים נדרשים |
+|---------|-------|---------------|
+| WATER | H₂O | 2H + 1O |
+| CARBON DIOXIDE | CO₂ | 1C + 2O |
+| ALCOHOL | C₂H₆O | 2C + 6H + 1O |
+| GLUCOSE | C₆H₁₂O₆ | 6C + 12H + 6O |
 
-### **Q3: Administration - Beverage Production Console** (15 points)
-**Executable**: `drinks_bar`, `molecule_requester`
-
-🔧 **Administrative Features**:
-- **Console Interface**: Real-time administrative commands via stdin
-- **Beverage Calculations**: Production capacity analysis
-- **Recipe Management**:
-  - **Soft Drink**: H₂O + CO₂ + C₆H₁₂O₆
-  - **Vodka**: H₂O + C₂H₆O + C₆H₁₂O₆  
-  - **Champagne**: H₂O + CO₂ + C₂H₆O
-- **Concurrent Operations**: Simultaneous client + admin operations
-
-**Key Technologies**:
-- Multi-source input handling (TCP + UDP + stdin)
-- Complex recipe calculations
-- Administrative command processing
-
----
-
-### **Q4: Professionalization - CLI & Timeout Support**
-**Executable**: `drinks_bar`, `atom_supplier`, `molecule_requester`
-
-🔧 **Professional Features**:
-- **Advanced CLI**: Full `getopt_long()` argument parsing
-- **Initial Configuration**: Pre-populate inventory from command line
-- **Timeout Management**: `SIGALRM`-based automatic shutdown
-- **Flexible Addressing**: Support for both IP addresses and hostnames
-
-**Command Line Options**:
-```bash
-# Server Options
--T, --tcp-port <port>      # TCP listening port (required)
--U, --udp-port <port>      # UDP listening port (required)  
--o, --oxygen <count>       # Initial oxygen atoms
--c, --carbon <count>       # Initial carbon atoms
--h, --hydrogen <count>     # Initial hydrogen atoms
--t, --timeout <seconds>    # Inactivity timeout
-
-# Client Options  
--h <hostname/IP>           # Server hostname or IP
--p <port>                  # Server port
+### פקודות חדשות (UDP):
+```
+DELIVER WATER <כמות>
+DELIVER CARBON DIOXIDE <כמות>
+DELIVER ALCOHOL <כמות>
+DELIVER GLUCOSE <כמות>
 ```
 
-**Key Technologies**:
-- `getopt_long()` for robust argument parsing
-- `alarm()` and signal handling for timeouts
-- `getaddrinfo()` for hostname resolution
-
----
-
-### **Q5: Modernization - Unix Domain Sockets**
-**Executable**: `drinks_bar`, `atom_supplier`, `molecule_requester`
-
-🔧 **Transport Layer Flexibility**:
-- **Multi-Transport Support**: Network sockets + Unix Domain Sockets
-- **UDS Stream**: TCP-equivalent for local inter-process communication
-- **UDS Datagram**: UDP-equivalent for local message passing
-- **Automatic Cleanup**: Socket file management and cleanup
-
-**UDS Command Line Options**:
+### הרצה:
 ```bash
-# Server UDS Options
--s, --stream-path <path>     # UDS stream socket path  
--d, --datagram-path <path>   # UDS datagram socket path
+# Terminal 1 - שרת (TCP פורט 12345, UDP פורט 12346)
+cd q2
+./molecule_supplier 12345 12346
 
-# Client UDS Options
--f <UDS-socket-path>         # Connect via Unix Domain Socket
+# Terminal 2 - לקוח UDP
+./molecule_requester localhost 12346
 ```
 
-**Key Technologies**:
-- `AF_UNIX` socket family
-- `SOCK_STREAM` and `SOCK_DGRAM` for UDS
-- Filesystem-based socket addressing
-- Socket file lifecycle management
+### טכנולוגיות חדשות:
+- `SOCK_DGRAM` - UDP sockets
+- `recvfrom()`, `sendto()` - תקשורת UDP
+- ניהול מרובה פרוטוקולים עם `select()`
 
 ---
 
-### **Q6: Production-Ready - Persistent Storage & Concurrency**
-**Executable**: `drinks_bar`, `atom_supplier`, `molecule_requester`
+## 📙 שלב 3 - קונסול (15 נקודות)
+### Stage 3 - Console Interface (15 points)
 
-🔧 **Enterprise-Grade Features**:
-- **Memory-Mapped Persistence**: Zero-copy file I/O using `mmap()`
-- **Process Synchronization**: File locking for concurrent server instances  
-- **State Recovery**: Automatic inventory restoration across restarts
-- **Atomic Operations**: Race-condition-free inventory updates
+**קבצים**: `drinks_bar.c`, `atom_supplier.c`, `molecule_requester.c`
 
-**Persistence Command Line**:
-```bash
--f, --save-file <filepath>   # Persistent storage file
+### 🆕 מה חדש בשלב זה (מעבר לשלב 2):
+- **ממשק קונסול** - קלט מהמקלדת במקביל ללקוחות
+- **חישוב משקאות** - כמה משקאות ניתן לייצר מהמלאי
+- **שלושה מתכונים**:
+
+| משקה | מרכיבים | אטומים לכל יחידה |
+|------|---------|------------------|
+| SOFT DRINK | H₂O + CO₂ + C₆H₁₂O₆ | 7C + 14H + 9O |
+| VODKA | H₂O + C₂H₆O + C₆H₁₂O₆ | 8C + 20H + 8O |
+| CHAMPAGNE | H₂O + CO₂ + C₂H₆O | 3C + 8H + 4O |
+
+### פקודות קונסול חדשות:
+```
+GEN SOFT DRINK    # כמה משקאות קלים ניתן לייצר
+GEN VODKA         # כמה וודקה ניתן לייצר
+GEN CHAMPAGNE     # כמה שמפניה ניתן לייצר
+exit / quit       # יציאה
 ```
 
-**Advanced Implementation Details**:
-- **File Locking Strategy**:
-  - `LOCK_EX` (Exclusive) for write operations (add/subtract atoms)
-  - `LOCK_SH` (Shared) for read operations (display inventory/calculate drinks)
-  - `LOCK_UN` for lock release
-- **Memory Mapping**: `mmap()` with `MAP_SHARED` for inter-process visibility
-- **State Management**: 
-  - **Existing file**: Load current inventory, ignore CLI atom counts
-  - **New file**: Initialize with CLI values, create persistent storage
-  - **No file**: Traditional in-memory operation (backward compatibility)
+### הרצה:
+```bash
+cd q3
+./drinks_bar 12345 12346
+# עכשיו ניתן להקליד פקודות GEN במסוף השרת
+```
 
-**Key Technologies**:
-- `mmap()` and `munmap()` for memory-mapped I/O
-- `flock()` for file-based synchronization
-- `ftruncate()` for file size management
-- Multi-process coordination patterns
+### טכנולוגיות חדשות:
+- `STDIN_FILENO` ב-`select()` - האזנה למקלדת
+- חישוב מינימום - מציאת גורם מגביל
 
 ---
 
-## 🔧 Compilation & Build System
+## 📕 שלב 4 - אופציות התחלה (20 נקודות)
+### Stage 4 - Startup Options (20 points)
 
-### **Build All Stages**
+**קבצים**: `drinks_bar.c`, `atom_supplier.c`, `molecule_requester.c`
+
+### 🆕 מה חדש בשלב זה (מעבר לשלב 3):
+- **פרמטרים בשורת פקודה** - `getopt_long()`
+- **אתחול מלאי** - התחלה עם כמות ידועה של אטומים
+- **Timeout** - סגירה אוטומטית לאחר חוסר פעילות
+- **ארגומנטים בכל סדר** - גמישות מלאה
+
+### אופציות השרת:
+| אופציה | תיאור | חובה/רשות |
+|--------|--------|-----------|
+| `-T, --tcp-port` | פורט TCP | **חובה** |
+| `-U, --udp-port` | פורט UDP | **חובה** |
+| `-o, --oxygen` | אטומי חמצן התחלתיים | רשות |
+| `-c, --carbon` | אטומי פחמן התחלתיים | רשות |
+| `-h, --hydrogen` | אטומי מימן התחלתיים | רשות |
+| `-t, --timeout` | Timeout בשניות | רשות |
+
+### אופציות הלקוח:
+| אופציה | תיאור |
+|--------|--------|
+| `-h` | כתובת השרת (hostname/IP) |
+| `-p` | פורט השרת |
+
+### דוגמאות הרצה:
+```bash
+# שרת עם מלאי התחלתי ו-timeout
+cd q4
+./drinks_bar -T 12345 -U 12346 -c 1000 -o 2000 -h 3000 -t 60
+
+# לקוח
+./atom_supplier -h localhost -p 12345
+./molecule_requester -h 127.0.0.1 -p 12346
+```
+
+### טכנולוגיות חדשות:
+- `getopt_long()` - פרסור ארגומנטים
+- `signal(SIGALRM, handler)` - טיפול בסיגנלים
+- `alarm()` - מנגנון timeout
+
+---
+
+## 📓 שלב 5 - UDS (15 נקודות)
+### Stage 5 - Unix Domain Sockets (15 points)
+
+**קבצים**: `drinks_bar.c`, `atom_supplier.c`, `molecule_requester.c`
+
+### 🆕 מה חדש בשלב זה (מעבר לשלב 4):
+- **Unix Domain Sockets** - תקשורת מקומית מהירה
+- **UDS Stream** - תחליף ל-TCP (לאטומים)
+- **UDS Datagram** - תחליף ל-UDP (למולקולות)
+- **ניקוי קבצי socket** - ניהול מחזור חיים
+
+### אופציות UDS חדשות בשרת:
+| אופציה | תיאור |
+|--------|--------|
+| `-s, --stream-path` | נתיב socket מסוג stream |
+| `-d, --datagram-path` | נתיב socket מסוג datagram |
+
+### אופציות UDS חדשות בלקוח:
+| אופציה | תיאור |
+|--------|--------|
+| `-f` | נתיב לקובץ UDS socket |
+
+### דוגמאות הרצה:
+```bash
+cd q5
+
+# Option 1: רשת (TCP/UDP)
+./drinks_bar -T 12345 -U 12346 -c 1000
+
+# Option 2: UDS
+./drinks_bar -s /tmp/stream.sock -d /tmp/dgram.sock -c 1000
+
+# לקוח UDS
+./atom_supplier -f /tmp/stream.sock
+./molecule_requester -f /tmp/dgram.sock
+```
+
+### 🚫 שגיאה: ארגומנטים סותרים
+```bash
+# לא ניתן לציין גם רשת וגם UDS:
+./atom_supplier -h localhost -p 12345 -f /tmp/stream.sock  # שגיאה!
+```
+
+### טכנולוגיות חדשות:
+- `AF_UNIX` - Unix Domain Sockets
+- `struct sockaddr_un` - כתובות UDS
+- `unlink()` - ניקוי קבצי socket
+
+---
+
+## 📔 שלב 6 - מקביליות תהליכים (20 נקודות)
+### Stage 6 - Process Concurrency (20 points)
+
+**קבצים**: `drinks_bar.c`, `atom_supplier.c`, `molecule_requester.c`
+
+### 🆕 מה חדש בשלב זה (מעבר לשלב 5):
+- **שמירת מצב בקובץ** - אחסון מתמיד של המלאי
+- **Memory Mapping** - `mmap()` לגישה מהירה
+- **נעילת קבצים** - `flock()` לסנכרון בין תהליכים
+- **ריצה מקבילית** - מספר שרתים יכולים לעבוד על אותו קובץ
+
+### אופציה חדשה:
+| אופציה | תיאור |
+|--------|--------|
+| `-f, --save-file` | נתיב לקובץ שמירה |
+
+### התנהגות הקובץ:
+| מצב | התנהגות |
+|-----|---------|
+| קובץ קיים | טוען מלאי מהקובץ, **מתעלם** מערכי CLI |
+| קובץ חדש | יוצר ומאתחל עם ערכי CLI |
+| ללא קובץ | התנהגות רגילה (זיכרון בלבד) |
+
+### אסטרטגיית נעילה:
+| פעולה | סוג נעילה |
+|-------|-----------|
+| הוספת/הפחתת אטומים | `LOCK_EX` (Exclusive) |
+| קריאת מלאי/חישוב משקאות | `LOCK_SH` (Shared) |
+
+### דוגמאות הרצה:
+```bash
+cd q6
+
+# הרצה ראשונה - יצירת קובץ
+./drinks_bar -T 12345 -U 12346 -f warehouse.dat -c 5000 -o 3000 -h 7000
+
+# הרצה שנייה (במקביל או לאחר סגירה) - טוענת מהקובץ
+./drinks_bar -T 12347 -U 12348 -f warehouse.dat
+
+# הרצה מקבילית על אותו קובץ
+# Terminal 1
+./drinks_bar -T 12345 -U 12346 -f /tmp/shared.dat -c 1000
+
+# Terminal 2 (מאותו קובץ!)
+./drinks_bar -T 12347 -U 12348 -f /tmp/shared.dat
+```
+
+### טכנולוגיות חדשות:
+- `mmap()` - מיפוי קובץ לזיכרון
+- `flock()` - נעילה ייעוצית
+- `ftruncate()` - קביעת גודל קובץ
+- `MAP_SHARED` - שיתוף בין תהליכים
+
+---
+
+## 🔧 בנייה והרצה / Build & Run
+
+### בניית כל השלבים:
 ```bash
 make all
 ```
 
-### **Build Individual Stages**
+### בניית שלב ספציפי:
 ```bash
-cd q1 && make    # Basic TCP system
-cd q2 && make    # Multi-protocol system  
-cd q3 && make    # Administrative console
-cd q4 && make    # CLI & timeout support
-cd q5 && make    # Unix Domain Sockets
-cd q6 && make    # Persistent storage
+cd q1 && make    # שלב 1
+cd q2 && make    # שלב 2
+cd q3 && make    # שלב 3
+cd q4 && make    # שלב 4
+cd q5 && make    # שלב 5
+cd q6 && make    # שלב 6
 ```
 
-### **Clean All Builds**
+### ניקוי:
 ```bash
 make clean
 ```
 
 ---
 
-## 📖 Usage Examples
+## 📋 סיכום פקודות / Command Summary
 
-### **Q1: Basic TCP Warehouse**
-**Executables**: `atom_warehouse`, `atom_supplier`
-
-```bash
-# Terminal 1 - Start atom warehouse server
-cd q1
-./atom_warehouse <TCP_PORT>
-# Example: ./atom_warehouse 12345
-
-# Terminal 2 - Connect atom supplier client  
-./atom_supplier <HOSTNAME/IP> <TCP_PORT>
-# Example: ./atom_supplier 127.0.0.1 12345
-# Example: ./atom_supplier localhost 12345
+### פקודות TCP (הוספת אטומים):
+```
+ADD CARBON <amount>
+ADD HYDROGEN <amount>
+ADD OXYGEN <amount>
 ```
 
-### **Q2: Molecule Production System**
-**Executables**: `molecule_supplier`, `molecule_requester`
-
-```bash
-# Terminal 1 - Start molecule supplier server
-cd q2
-./molecule_supplier <TCP_PORT> <UDP_PORT>
-# Example: ./molecule_supplier 12345 12346
-
-# Terminal 2 - Start molecule requester client
-./molecule_requester <HOSTNAME/IP> <PORT>
-# Example: ./molecule_requester 127.0.0.1 12345
-# Example: ./molecule_requester localhost 12345
+### פקודות UDP (בקשת מולקולות):
+```
+DELIVER WATER <amount>
+DELIVER CARBON DIOXIDE <amount>
+DELIVER ALCOHOL <amount>
+DELIVER GLUCOSE <amount>
 ```
 
-### **Q3: Administrative Beverage Console**
-**Executables**: `drinks_bar`, `atom_supplier`, `molecule_requester`
-
-```bash
-# Terminal 1 - Start drinks bar server with admin console
-cd q3
-./drinks_bar <TCP_PORT> <UDP_PORT>
-# Example: ./drinks_bar 12345 12346
-# Server console supports GEN commands for drink calculations
-
-# Terminal 2 - Connect atom supplier client (TCP - for adding atoms)
-./atom_supplier <HOSTNAME/IP> <TCP_PORT>
-# Example: ./atom_supplier 127.0.0.1 12345
-
-# Terminal 3 - Connect molecule requester client (UDP - for requesting molecules)
-./molecule_requester <HOSTNAME/IP> <UDP_PORT>
-# Example: ./molecule_requester 127.0.0.1 12345
-# Note: Client connects to TCP port, UDP communication is handled automatically
+### פקודות קונסול (חישוב משקאות):
 ```
-
-### **Q4: Professional CLI Server**
-**Executables**: `drinks_bar`, `atom_supplier`, `molecule_requester`
-
-**Server Options**:
-```bash
-cd q4
-./drinks_bar -T <tcp-port> -U <udp-port> [OPTIONS]
-
-Required:
-  -T, --tcp-port <port>      TCP listening port
-  -U, --udp-port <port>      UDP listening port
-
-Optional:
-  -o, --oxygen <count>       Initial oxygen atoms
-  -c, --carbon <count>       Initial carbon atoms  
-  -h, --hydrogen <count>     Initial hydrogen atoms
-  -t, --timeout <seconds>    Inactivity timeout
-
-# Examples:
-./drinks_bar -T 12345 -U 12346
-./drinks_bar -T 12345 -U 12346 -c 1000 -o 2000 -h 3000 -t 60
+GEN SOFT DRINK
+GEN VODKA
+GEN CHAMPAGNE
+exit / quit
 ```
-
-**Client Options**:
-```bash
-# Atom supplier client
-./atom_supplier -h <hostname/IP> -p <port>
-# Example: ./atom_supplier -h localhost -p 12345
-
-# Molecule requester client  
-./molecule_requester -h <hostname/IP> -p <port>
-# Example: ./molecule_requester -h 127.0.0.1 -p 12345
-```
-
-### **Q5: Unix Domain Sockets**
-**Executables**: `drinks_bar`, `atom_supplier`, `molecule_requester`
-
-**Server Transport Options**:
-```bash
-cd q5
-# Option 1: Network Sockets (TCP/UDP)
-./drinks_bar -T <tcp-port> -U <udp-port> [ATOM_OPTIONS] [TIMEOUT]
-
-# Option 2: Unix Domain Sockets
-./drinks_bar -s <stream-path> -d <datagram-path> [ATOM_OPTIONS] [TIMEOUT]
-
-# Examples:
-./drinks_bar -T 12345 -U 12346 -c 1000 -o 2000 -h 3000
-./drinks_bar -s /tmp/warehouse_stream.sock -d /tmp/warehouse_dgram.sock -c 1000
-```
-
-**Client Transport Options**:
-```bash
-# Option 1: Network Connection
-./atom_supplier -h <hostname/IP> -p <port>
-./molecule_requester -h <hostname/IP> -p <port>
-
-# Option 2: Unix Domain Socket Connection
-./atom_supplier -f <UDS_socket_path>
-./molecule_requester -f <UDS_socket_path>
-
-# Examples:
-./atom_supplier -h 127.0.0.1 -p 12345
-./atom_supplier -f /tmp/warehouse_stream.sock
-./molecule_requester -f /tmp/warehouse_stream.sock
-```
-
-### **Q6: Persistent Multi-Process System**
-**Executables**: `drinks_bar`, `atom_supplier`, `molecule_requester`
-
-**Server Persistence Options**:
-```bash
-cd q6
-# Option 1: Network + Persistence
-./drinks_bar -T <tcp-port> -U <udp-port> [OPTIONS] [-f <save-file>]
-
-# Option 2: UDS + Persistence  
-./drinks_bar -s <stream-path> -d <datagram-path> [OPTIONS] [-f <save-file>]
-
-All Server Options:
-  -T, --tcp-port <port>        TCP listening port
-  -U, --udp-port <port>        UDP listening port  
-  -s, --stream-path <path>     UDS stream socket path
-  -d, --datagram-path <path>   UDS datagram socket path
-  -o, --oxygen <count>         Initial oxygen atoms
-  -c, --carbon <count>         Initial carbon atoms
-  -h, --hydrogen <count>       Initial hydrogen atoms
-  -t, --timeout <seconds>      Inactivity timeout
-  -f, --save-file <filepath>   Persistent storage file
-
-# Examples:
-./drinks_bar -T 12345 -U 12346 -f warehouse.dat -c 5000 -o 3000 -h 7000
-./drinks_bar -s /tmp/stream.sock -d /tmp/dgram.sock -f warehouse.dat -c 1000
-```
-
-**Client Connection Options**:
-```bash
-# Option 1: Network Connection
-./atom_supplier -h <hostname/IP> -p <port>
-./molecule_requester -h <hostname/IP> -p <port>
-
-# Option 2: Unix Domain Socket Connection
-./atom_supplier -f <UDS_socket_path>
-./molecule_requester -f <UDS_socket_path>
-
-# Examples:
-./atom_supplier -h 127.0.0.1 -p 12345
-./molecule_requester -h localhost -p 12345
-./atom_supplier -f /tmp/stream.sock
-./molecule_requester -f /tmp/stream.sock
-```
----
-
-## 🎮 Supported Commands
-
-### **Client Commands (TCP/Stream Connection)**
-| Command | Description | Example |
-|---------|-------------|---------|
-| `ADD CARBON <amount>` | Add carbon atoms to inventory | `ADD CARBON 1000` |
-| `ADD HYDROGEN <amount>` | Add hydrogen atoms to inventory | `ADD HYDROGEN 2000` |  
-| `ADD OXYGEN <amount>` | Add oxygen atoms to inventory | `ADD OXYGEN 1500` |
-
-### **Client Commands (UDP/Datagram Connection)**
-| Command | Description | Formula | Example |
-|---------|-------------|---------|---------|
-| `DELIVER WATER <qty>` | Request water molecules | H₂O (2H + 1O) | `DELIVER WATER 100` |
-| `DELIVER CARBON DIOXIDE <qty>` | Request CO₂ molecules | CO₂ (1C + 2O) | `DELIVER CARBON DIOXIDE 50` |
-| `DELIVER ALCOHOL <qty>` | Request alcohol molecules | C₂H₆O (2C + 6H + 1O) | `DELIVER ALCOHOL 25` |
-| `DELIVER GLUCOSE <qty>` | Request glucose molecules | C₆H₁₂O₆ (6C + 12H + 6O) | `DELIVER GLUCOSE 10` |
-
-### **Administrative Commands (Server Console - Q3+)**
-| Command | Description | Recipe |
-|---------|-------------|---------|
-| `GEN SOFT DRINK` | Calculate soft drink capacity | H₂O + CO₂ + C₆H₁₂O₆ |
-| `GEN VODKA` | Calculate vodka capacity | H₂O + C₂H₆O + C₆H₁₂O₆ |
-| `GEN CHAMPAGNE` | Calculate champagne capacity | H₂O + CO₂ + C₂H₆O |
 
 ---
 
-## 🔬 Technical Implementation Deep Dive
+## 🧪 כיסוי קוד / Code Coverage
 
-### **Network Programming**
-- **Multi-Protocol Architecture**: Concurrent TCP and UDP socket handling
-- **I/O Multiplexing**: `select()` for efficient multi-client management
-- **Address Resolution**: `getaddrinfo()` for robust hostname/IP handling
-- **Error Recovery**: Comprehensive network error handling and client cleanup
+דו"ח כיסוי קוד זמין בקובץ `q6/coverage_report_q6.txt`:
 
-### **Inter-Process Communication**  
-- **Unix Domain Sockets**: High-performance local communication
-- **Socket Lifecycle**: Automatic socket file creation and cleanup
-- **Transport Abstraction**: Unified client interface across network and local sockets
-
-### **Memory Management & Persistence**
-- **Memory-Mapped I/O**: `mmap()` for zero-copy persistent storage
-- **File Synchronization**: `msync()` for immediate data persistence  
-- **Resource Management**: Proper cleanup of memory mappings and file descriptors
-
-### **Concurrency & Synchronization**
-- **File Locking**: `flock()` with advisory locking for process coordination
-- **Atomic Operations**: Transaction-like inventory updates
-- **Lock Granularity**: Optimized shared/exclusive locking strategy
-
-### **Signal Handling**
-- **Timeout Management**: `SIGALRM` for automatic server shutdown
-- **Graceful Cleanup**: Signal handlers for resource deallocation
-- **Signal Safety**: Async-signal-safe cleanup operations
+| קובץ | כיסוי |
+|------|-------|
+| atom_supplier.c | 84.40% |
+| drinks_bar.c | 80.43% |
+| molecule_requester.c | 84.17% |
+| **סה"כ** | **81.79%** |
 
 ---
 
-## 🧪 Testing & Quality Assurance
+## 🔬 סיכום טכנולוגי / Technical Summary
 
-### **Code Coverage Analysis**
-The project includes comprehensive code coverage reporting:
-
-```bash
-cd q6
-# Generate coverage data (requires --coverage flag in Makefile)
-gcov *.c
-
-# Coverage statistics automatically generated in coverage_report_q6.txt
-```
-
-**Current Coverage Metrics** (Q6):
-- **atom_supplier.c**: 84.40% line coverage
-- **drinks_bar.c**: 80.43% line coverage  
-- **molecule_requester.c**: 84.17% line coverage
-- **Overall**: 81.79% combined coverage
-
-### **Error Handling Coverage**
-The system includes comprehensive error handling for:
-- ✅ Network connectivity failures
-- ✅ Invalid command formats
-- ✅ Atom count overflow (>10¹⁸ limit)
-- ✅ Insufficient atoms for molecule production
-- ✅ File I/O errors and permission issues
-- ✅ Memory allocation failures
-- ✅ Concurrent access conflicts
+| שלב | טכנולוגיות מרכזיות |
+|-----|-------------------|
+| Q1 | TCP sockets, `select()`, I/O multiplexing |
+| Q2 | UDP sockets, multi-protocol handling |
+| Q3 | stdin handling, drink calculations |
+| Q4 | `getopt_long()`, `SIGALRM`, `alarm()` |
+| Q5 | `AF_UNIX`, UDS stream/datagram |
+| Q6 | `mmap()`, `flock()`, file persistence |
 
 ---
 
-## 🎯 Educational Objectives Achieved
+## 🎓 מידע על המטלה / Assignment Info
 
-### **Core Systems Programming Concepts**
-1. **Socket Programming**: TCP/UDP network communication
-2. **I/O Multiplexing**: `select()` for concurrent client handling
-3. **Process Synchronization**: File locking and shared resources
-4. **Memory Management**: Dynamic allocation and memory-mapped files
-5. **Signal Handling**: Timeout mechanisms and graceful shutdown
-
-### **Advanced IPC Mechanisms** 
-1. **Unix Domain Sockets**: High-performance local communication
-2. **Memory-Mapped Files**: Zero-copy persistent storage
-3. **File Locking**: Advisory locking for multi-process coordination
-4. **Atomic Operations**: Race-condition-free shared state management
-
-### **Professional Development Practices**
-1. **Modular Design**: Progressive feature development across stages
-2. **Error Handling**: Comprehensive validation and recovery mechanisms  
-3. **Documentation**: Extensive inline comments and external documentation
-4. **Testing**: Code coverage analysis and systematic validation
-5. **Build Systems**: Recursive Makefiles and dependency management
+**קורס**: מערכות הפעלה - מדעי המחשב  
+**מוסד**: אוניברסיטת אריאל  
+**משקל**: 10% מהציון הסופי + 5% הגנה
 
 ---
 
-## 🔍 System Requirements
-
-### **Compilation Environment**
-- **Compiler**: GCC with C99 standard support
-- **Required Standards**: `_POSIX_C_SOURCE=200112L`
-- **Build Tools**: Make, standard POSIX utilities
----
-
-
-## 🎓 Assignment Information
-
-**Course**: Operating Systems - Computer Science  
-**Institution**: Ariel University  
-**Submission Requirements**: Complete source code + coverage reports + recursive Makefile
-
----
-
-**🔥 This implementation demonstrates mastery of advanced systems programming concepts including network programming, inter-process communication, memory management, and concurrent programming in a production-quality molecular warehouse management system.**
+**🔥 פרויקט זה מדגים שליטה במושגים מתקדמים של תכנות מערכות כולל תכנות רשתות, תקשורת בין-תהליכית, ניהול זיכרון ותכנות מקבילי במערכת ניהול מחסן מולקולות ברמה מקצועית.**
